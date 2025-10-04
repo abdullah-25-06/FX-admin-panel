@@ -1,96 +1,103 @@
 import React, { useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Edit2, Trash2 } from "lucide-react";
 
-const RechargeList = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [type, setType] = useState("Member account");
-  const [topupType, setTopupType] = useState("all");
-
-  const data = [
+const ProductList = () => {
+  const products = [
     {
-      id: 386,
-      uid: "1058819",
-      account: "Alex AA",
-      orderNumber: "",
-      method: "",
-      voucher: "",
-      operatingTime: "2025-09-23 12:08:57",
-      amount: 700.0,
-      balance: 700,
-      shown: "display",
-      remark: "Successfully added funds to the system",
-      reviewTime: "2025-09-23 12:08:57",
-      status: "passed",
+      no: 1,
+      serial: 14,
+      productName: "BTC/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.008",
+      riskControlLow: "0.00001",
+      riskControlHigh: "0.010",
     },
     {
-      id: 383,
-      uid: "1058817",
-      account: "Waheed1",
-      orderNumber: "",
-      method: "",
-      voucher: "",
-      operatingTime: "2025-09-20 16:45:12",
-      amount: 70.0,
-      balance: 70,
-      shown: "display",
-      remark: "Successfully added funds to the system",
-      reviewTime: "2025-09-20 16:45:12",
-      status: "passed",
+      no: 2,
+      serial: 60,
+      productName: "ETH/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.005",
+      riskControlLow: "0.001",
+      riskControlHigh: "0.010",
     },
     {
-      id: 378,
-      uid: "1058815",
-      account: "suryavk2580",
-      orderNumber: "",
-      method: "",
-      voucher: "",
-      operatingTime: "2025-09-14 06:40:03",
-      amount: 9300.0,
-      balance: 19120,
-      shown: "display",
-      remark: "Successfully added funds to the system",
-      reviewTime: "2025-09-14 06:40:03",
-      status: "passed",
+      no: 3,
+      serial: 23,
+      productName: "BNB/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.005",
+      riskControlLow: "0.001",
+      riskControlHigh: "0.010",
     },
     {
-      id: 376,
-      uid: "1058815",
-      account: "suryavk2580",
-      orderNumber: "",
-      method: "",
-      voucher: "",
-      operatingTime: "2025-09-14 06:39:34",
-      amount: 9820.0,
-      balance: 19640,
-      shown: "display",
-      remark: "Successfully added funds to the system",
-      reviewTime: "2025-09-14 06:39:34",
-      status: "passed",
+      no: 4,
+      serial: 62,
+      productName: "XRP/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.0008",
+      riskControlLow: "0.00001",
+      riskControlHigh: "0.00015",
     },
     {
-      id: 375,
-      uid: "1058815",
-      account: "suryavk2580",
-      orderNumber: "",
-      method: "",
-      voucher: "",
-      operatingTime: "2025-09-14 06:39:04",
-      amount: 5000.0,
-      balance: 9820,
-      shown: "display",
-      remark: "Successfully added funds to the system",
-      reviewTime: "2025-09-14 06:39:04",
-      status: "passed",
+      no: 5,
+      serial: 17,
+      productName: "LINK/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.00003",
+      riskControlLow: "0.00001",
+      riskControlHigh: "0.00005",
+    },
+    {
+      no: 6,
+      serial: 11,
+      productName: "BCH/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.008",
+      riskControlLow: "0.00001",
+      riskControlHigh: "0.00015",
+    },
+    {
+      no: 7,
+      serial: 31,
+      productName: "LTC/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.04",
+      riskControlLow: "0.03",
+      riskControlHigh: "0.18",
+    },
+    {
+      no: 8,
+      serial: 63,
+      productName: "BSV/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.0008",
+      riskControlLow: "0.00001",
+      riskControlHigh: "0.00015",
+    },
+    {
+      no: 9,
+      serial: 58,
+      productName: "ADA/USDT",
+      status: "Open market",
+      category: "Foreign Exchange",
+      randomValues: "0.0008",
+      riskControlLow: "0.00003",
+      riskControlHigh: "0.00015",
     },
   ];
 
-  const filteredData = data.filter((item) =>
-    item.account.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div style={{ backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
-      {/* Top Header */}
+      {/* Top Header - Only right side info */}
       <div
         style={{
           backgroundColor: "white",
@@ -98,33 +105,9 @@ const RechargeList = () => {
           padding: "12px 20px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-          <button
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: "24px",
-              cursor: "pointer",
-              padding: "0",
-            }}
-          >
-            ☰
-          </button>
-          <h1
-            style={{
-              fontSize: "18px",
-              margin: "0",
-              color: "#ff6b6b",
-              fontWeight: "normal",
-            }}
-          >
-            MANAGEMENT SYSTEM
-          </h1>
-        </div>
-
         <div
           style={{
             display: "flex",
@@ -161,191 +144,47 @@ const RechargeList = () => {
 
       {/* Main Content */}
       <div style={{ padding: "20px" }}>
-        {/* Filters */}
+        {/* Action Buttons Row */}
         <div
           style={{
             backgroundColor: "white",
             borderRadius: "4px",
-            padding: "20px",
+            padding: "15px 20px",
             marginBottom: "15px",
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
           }}
         >
-          <div
+          <button
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: "15px",
-              marginBottom: "15px",
+              backgroundColor: "#3498db",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              padding: "8px 20px",
+              fontSize: "13px",
+              cursor: "pointer",
+              fontWeight: "500",
             }}
           >
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  color: "#666",
-                  fontSize: "12px",
-                  marginBottom: "5px",
-                }}
-              >
-                type
-              </label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                style={{
-                  width: "100%",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  padding: "6px 10px",
-                  fontSize: "13px",
-                }}
-              >
-                <option>Member account</option>
-                <option>Agent account</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  color: "#666",
-                  fontSize: "12px",
-                  marginBottom: "5px",
-                }}
-              >
-                Account
-              </label>
-              <input
-                type='text'
-                placeholder='Account'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  width: "100%",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  padding: "6px 10px",
-                  fontSize: "13px",
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  color: "#666",
-                  fontSize: "12px",
-                  marginBottom: "5px",
-                }}
-              >
-                Type of top-up
-              </label>
-              <select
-                value={topupType}
-                onChange={(e) => setTopupType(e.target.value)}
-                style={{
-                  width: "100%",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  padding: "6px 10px",
-                  fontSize: "13px",
-                }}
-              >
-                <option value='all'>all</option>
-                <option value='manual'>Manual</option>
-                <option value='auto'>Auto</option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  color: "#666",
-                  fontSize: "12px",
-                  marginBottom: "5px",
-                }}
-              >
-                Order time
-              </label>
-              <input
-                type='text'
-                placeholder='Click Select Time'
-                style={{
-                  width: "100%",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  padding: "6px 10px",
-                  fontSize: "13px",
-                  color: "#999",
-                }}
-              />
-            </div>
-          </div>
-
-          <div
+            Sorting
+          </button>
+          <button
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              flexWrap: "wrap",
+              backgroundColor: "#3498db",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              padding: "8px 20px",
+              fontSize: "13px",
+              cursor: "pointer",
+              fontWeight: "500",
             }}
           >
-            <input
-              type='text'
-              placeholder='Click Select Time'
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                padding: "6px 10px",
-                fontSize: "13px",
-                color: "#999",
-              }}
-            />
-
-            <button
-              style={{
-                backgroundColor: "#27ae60",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                padding: "7px 20px",
-                fontSize: "13px",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
-            >
-              Search
-            </button>
-            <button
-              onClick={() => {
-                setSearchTerm("");
-                setTopupType("all");
-                setType("Member account");
-              }}
-              style={{
-                backgroundColor: "#e74c3c",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                padding: "7px 20px",
-                fontSize: "13px",
-                cursor: "pointer",
-                fontWeight: "500",
-              }}
-            >
-              Reset
-            </button>
-            <span
-              style={{ color: "#666", fontSize: "13px", marginLeft: "10px" }}
-            >
-              Total deposit amount:{" "}
-              <span style={{ fontWeight: "500" }}>13321916.5</span>
-            </span>
-          </div>
+            Add product
+          </button>
         </div>
 
         {/* Table */}
@@ -361,7 +200,7 @@ const RechargeList = () => {
             <table
               style={{
                 width: "100%",
-                fontSize: "12px",
+                fontSize: "13px",
                 borderCollapse: "collapse",
               }}
             >
@@ -374,248 +213,241 @@ const RechargeList = () => {
                 >
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    #ID
+                    No.
                   </th>
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    UID
+                    Serial
                   </th>
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Account
+                    Product Name
                   </th>
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Order number
+                    Status
                   </th>
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Deposit method
+                    Category
                   </th>
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Recharge voucher
+                    Random Values
                   </th>
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Operating time
+                    Risk control low
                   </th>
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Member account amount
+                    Risk control high
                   </th>
                   <th
                     style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
+                      padding: "12px 15px",
+                      textAlign: "center",
                       color: "#666",
                       fontWeight: "500",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    Whether it is balance
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
-                      color: "#666",
-                      fontWeight: "500",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    shown
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
-                      color: "#666",
-                      fontWeight: "500",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    remark
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
-                      color: "#666",
-                      fontWeight: "500",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Review time
-                  </th>
-                  <th
-                    style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
-                      color: "#666",
-                      fontWeight: "500",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Audit/status
+                    Operate
                   </th>
                 </tr>
               </thead>
 
               <tbody>
-                {filteredData.map((item) => (
+                {products.map((item) => (
                   <tr
-                    key={item.id}
+                    key={item.no}
                     style={{ borderBottom: "1px solid #f0f0f0" }}
                   >
-                    <td style={{ padding: "10px 12px", color: "#333" }}>
-                      {item.id}
-                    </td>
-                    <td style={{ padding: "10px 12px", color: "#333" }}>
-                      {item.uid}
-                    </td>
                     <td
                       style={{
-                        padding: "10px 12px",
-                        color: "#333",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {item.account}
-                    </td>
-                    <td style={{ padding: "10px 12px", color: "#333" }}>
-                      {item.orderNumber}
-                    </td>
-                    <td style={{ padding: "10px 12px", color: "#333" }}>
-                      {item.method}
-                    </td>
-                    <td style={{ padding: "10px 12px", color: "#333" }}>
-                      {item.voucher}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 12px",
-                        color: "#333",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <div>{item.operatingTime.split(" ")[0]}</div>
-                      <div style={{ color: "#999", fontSize: "11px" }}>
-                        {item.operatingTime.split(" ")[1]}
-                      </div>
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 12px",
-                        color: "#e74c3c",
-                        fontWeight: "500",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      ${item.amount.toFixed(2)}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 12px",
-                        color: "#e74c3c",
-                        fontWeight: "500",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      ${item.balance}
-                    </td>
-                    <td style={{ padding: "10px 12px", color: "#333" }}>
-                      {item.shown}
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 12px",
+                        padding: "12px 15px",
                         color: "#666",
-                        maxWidth: "200px",
+                        textAlign: "center",
                       }}
                     >
+                      {item.no}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px 15px",
+                        color: "#666",
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.serial}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px 15px",
+                        color: "#333",
+                        whiteSpace: "nowrap",
+                        textAlign: "center",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {item.productName}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px 15px",
+                        color: "#666",
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.status}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px 15px",
+                        color: "#666",
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.category}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px 15px",
+                        color: "#666",
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.randomValues}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px 15px",
+                        color: "#666",
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.riskControlLow}
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px 15px",
+                        color: "#666",
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.riskControlHigh}
+                    </td>
+                    <td style={{ padding: "12px 15px", textAlign: "center" }}>
                       <div
                         style={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          display: "flex",
+                          gap: "8px",
+                          justifyContent: "center",
                         }}
                       >
-                        {item.remark}
+                        <button
+                          style={{
+                            backgroundColor: "#e74c3c",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "6px 15px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Close market
+                        </button>
+                        <button
+                          style={{
+                            backgroundColor: "#3498db",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "6px 10px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          style={{
+                            backgroundColor: "#e74c3c",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "4px",
+                            padding: "6px 10px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
-                    </td>
-                    <td
-                      style={{
-                        padding: "10px 12px",
-                        color: "#333",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <div>{item.reviewTime.split(" ")[0]}</div>
-                      <div style={{ color: "#999", fontSize: "11px" }}>
-                        {item.reviewTime.split(" ")[1]}
-                      </div>
-                    </td>
-                    <td style={{ padding: "10px 12px" }}>
-                      <span style={{ color: "#27ae60", fontWeight: "500" }}>
-                        {item.status}
-                      </span>
                     </td>
                   </tr>
                 ))}
@@ -628,4 +460,4 @@ const RechargeList = () => {
   );
 };
 
-export default RechargeList;
+export default ProductList;

@@ -30,6 +30,10 @@ import OpenOrder from "./pages/OpenOrder";
 import MemberWallet from "./pages/MemberWallet";
 import DataReview from "./pages/DataReview";
 import ProductList from "./pages/ProductList";
+import RiskManagement from "./pages/RiskManagement";
+import RecycleBin from "./pages/RecycleBin";
+import BasicSettings from "./pages/BasicSettings";
+import Carousel from "./pages/Carousel";
 
 import "./App.css";
 
@@ -87,9 +91,11 @@ function App() {
             <Route path='/openOrder' element={<OpenOrder />} />
             <Route path='/memberWallet' element={<MemberWallet />} />
             <Route path='/dataReview' element={<DataReview />} />
-
-            {/* ✅ Added Product List Route */}
+            <Route path='/riskManagement' element={<RiskManagement />} />
             <Route path='/productList' element={<ProductList />} />
+            <Route path='/recycleBin' element={<RecycleBin />} />
+            <Route path='/basicSettings' element={<BasicSettings />} />
+            <Route path='/carousel' element={<Carousel />} />
           </Routes>
         </div>
       </div>
