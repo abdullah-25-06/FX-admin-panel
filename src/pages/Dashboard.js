@@ -179,17 +179,17 @@ const Dashboard = () => {
                 id: 1677,
                 name: "Alex AA",
                 product: "BTC/USDT",
-                commission: "₹50.0",
-                valid: "₹50.0",
-                profit: "₹200.0",
+                commission: "$50.0",
+                valid: "$50.0",
+                profit: "$200.0",
               },
               {
                 id: 1676,
                 name: "Alex AA",
                 product: "BTC/USDT",
-                commission: "₹100.0",
-                valid: "₹100.0",
-                profit: "₹200.0",
+                commission: "$100.0",
+                valid: "$100.0",
+                profit: "$200.0",
               },
             ].map((row, idx) => (
               <tr
@@ -207,10 +207,10 @@ const Dashboard = () => {
                 <td style={tdStyle}>111154.521</td>
                 <td style={tdStyle}>-</td>
                 <td style={{ ...tdStyle, color: "red" }}>{row.commission}</td>
-                <td style={{ ...tdStyle, color: "red" }}>₹0</td>
+                <td style={{ ...tdStyle, color: "red" }}>$0</td>
                 <td style={{ ...tdStyle, color: "green" }}>{row.valid}</td>
                 <td style={{ ...tdStyle, color: "red" }}>{row.profit}</td>
-                <td style={tdStyle}>₹0</td>
+                <td style={tdStyle}>$0</td>
                 <td style={tdStyle}>0</td>
               </tr>
             ))}
