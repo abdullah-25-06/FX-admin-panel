@@ -151,9 +151,22 @@ const WithdrawalList = () => {
   const [rowStatuses, setRowStatuses] = useState(() => {
     const map = {};
     data.forEach((d) => {
-      if (d.status === "Passed" || d.status === "Rejected")
+      if (
+        d.status === "Passed" ||
+        d.status === "Rejected" ||
+        d.status === "Frozen"
+      )
         map[d.no] = d.status;
       else map[d.no] = ""; // pending/none
+    });
+    return map;
+  });
+
+  // local state to track frozen status
+  const [frozenStatuses, setFrozenStatuses] = useState(() => {
+    const map = {};
+    data.forEach((d) => {
+      map[d.no] = false; // initially not frozen
     });
     return map;
   });
@@ -165,12 +178,27 @@ const WithdrawalList = () => {
   const getStatusColor = (status) => {
     if (status === "Passed") return "#27ae60";
     if (status === "Rejected") return "#e74c3c";
+    if (status === "Frozen") return "#f39c12";
     return "#000";
   };
 
   const handleStatus = (no, newStatus) => {
     setRowStatuses((prev) => ({ ...prev, [no]: newStatus }));
     // TODO: send API request to persist status if needed
+  };
+
+  const handleFreeze = (no) => {
+    setFrozenStatuses((prev) => ({
+      ...prev,
+      [no]: !prev[no],
+    }));
+    // If freezing, also set status to Frozen
+    if (!frozenStatuses[no]) {
+      setRowStatuses((prev) => ({ ...prev, [no]: "Frozen" }));
+    } else {
+      // If unfreezing, reset status to pending
+      setRowStatuses((prev) => ({ ...prev, [no]: "" }));
+    }
   };
 
   // layout container style: takes sidebar into account on larger screens
@@ -225,6 +253,7 @@ const WithdrawalList = () => {
         .wl-btn { background-color: #3498db; color: white; border: none; border-radius: 4px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
         .wl-pass { background-color: #27ae60; color: white; border: none; border-radius: 4px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
         .wl-reject { background-color: #e74c3c; color: white; border: none; border-radius: 4px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+        .wl-freeze { background-color: #f39c12; color: white; border: none; border-radius: 4px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
         .wl-small { padding: 4px 8px; font-size: 12px; }
         .wl-disabled { opacity: 0.6; cursor: not-allowed; }
       `}</style>
@@ -281,8 +310,11 @@ const WithdrawalList = () => {
               <tbody>
                 {filteredData.map((item) => {
                   const currentStatus = rowStatuses[item.no] || "";
+                  const isFrozen = frozenStatuses[item.no];
                   const isDecided =
-                    currentStatus === "Passed" || currentStatus === "Rejected";
+                    currentStatus === "Passed" ||
+                    currentStatus === "Rejected" ||
+                    currentStatus === "Frozen";
                   return (
                     <tr
                       key={item.no}
@@ -316,6 +348,7 @@ const WithdrawalList = () => {
                             display: "flex",
                             alignItems: "center",
                             gap: 8,
+                            flexWrap: "wrap",
                           }}
                         >
                           {isDecided ? (
@@ -325,9 +358,9 @@ const WithdrawalList = () => {
                                 fontWeight: 600,
                               }}
                             >
-                              {currentStatus === "Passed"
-                                ? "✅ Passed"
-                                : "❌ Rejected"}
+                              {currentStatus === "Passed" && "✅ Passed"}
+                              {currentStatus === "Rejected" && "❌ Rejected"}
+                              {currentStatus === "Frozen" && "❄️ Frozen"}
                             </span>
                           ) : (
                             <span
@@ -357,6 +390,15 @@ const WithdrawalList = () => {
                           >
                             Reject
                           </button>
+                          <button
+                            className={`wl-freeze wl-small ${
+                              isFrozen ? "wl-disabled" : ""
+                            }`}
+                            onClick={() => handleFreeze(item.no)}
+                            title={isFrozen ? "Unfreeze" : "Freeze"}
+                          >
+                            {isFrozen ? "Unfreeze" : "Freeze"}
+                          </button>
 
                           <button
                             className='wl-btn wl-small'
@@ -377,8 +419,11 @@ const WithdrawalList = () => {
         <div className='wl-card-list' style={{ marginTop: 8 }}>
           {filteredData.map((item) => {
             const currentStatus = rowStatuses[item.no] || "";
+            const isFrozen = frozenStatuses[item.no];
             const isDecided =
-              currentStatus === "Passed" || currentStatus === "Rejected";
+              currentStatus === "Passed" ||
+              currentStatus === "Rejected" ||
+              currentStatus === "Frozen";
             return (
               <div className='wl-card' key={`card-${item.no}`}>
                 <div className='wl-card-row'>
@@ -433,6 +478,7 @@ const WithdrawalList = () => {
                       gap: 8,
                       alignItems: "center",
                       justifyContent: "flex-end",
+                      flexWrap: "wrap",
                     }}
                   >
                     {isDecided ? (
@@ -442,9 +488,9 @@ const WithdrawalList = () => {
                           fontWeight: 600,
                         }}
                       >
-                        {currentStatus === "Passed"
-                          ? "✅ Passed"
-                          : "❌ Rejected"}
+                        {currentStatus === "Passed" && "✅ Passed"}
+                        {currentStatus === "Rejected" && "❌ Rejected"}
+                        {currentStatus === "Frozen" && "❄️ Frozen"}
                       </span>
                     ) : (
                       <span style={{ color: "#999", fontStyle: "italic" }}>
@@ -452,7 +498,7 @@ const WithdrawalList = () => {
                       </span>
                     )}
 
-                    <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       <button
                         className={`wl-pass wl-small ${
                           isDecided ? "wl-disabled" : ""
@@ -472,6 +518,15 @@ const WithdrawalList = () => {
                         title='Mark as Rejected'
                       >
                         Reject
+                      </button>
+                      <button
+                        className={`wl-freeze wl-small ${
+                          isFrozen ? "wl-disabled" : ""
+                        }`}
+                        onClick={() => handleFreeze(item.no)}
+                        title={isFrozen ? "Unfreeze" : "Freeze"}
+                      >
+                        {isFrozen ? "Unfreeze" : "Freeze"}
                       </button>
                       <button className='wl-btn wl-small'>Order Status</button>
                     </div>
