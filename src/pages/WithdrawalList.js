@@ -4,6 +4,7 @@ import { Bell } from "lucide-react";
 const WithdrawalList = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
+  // ✅ Sample data — you can connect this with backend/API later
   const data = [
     {
       no: 385,
@@ -34,139 +35,65 @@ const WithdrawalList = () => {
       status: "Passed",
     },
     {
+      no: 383,
+      uid: "1058805",
+      username: "SanaKhan",
+      dateTime: "2025-09-19 11:45:20",
+      withdrawAmount: 250.5,
+      accountBalance: 1000.0,
+      holderName: "Sana Khan",
+      bankName: "HBL Bank",
+      accountNumber: "PK12HABB00000012345678",
+      walletAddress: "3Ed8nsbbdheh293jd8s73",
+      qrCode: "https://qr.example.com/sana",
+      status: "Frozen",
+    },
+    {
       no: 382,
-      uid: "1058801",
-      username: "Ali 12345",
-      dateTime: "2025-09-17 19:33:15",
-      withdrawAmount: 116478.0,
-      accountBalance: 116478,
-      holderName: "Saiyad rukman ratt",
-      bankName: "Karnataka bank",
-      accountNumber: "653250010104810I",
+      uid: "1058809",
+      username: "JohnCrypto",
+      dateTime: "2025-09-18 09:22:14",
+      withdrawAmount: 1500.0,
+      accountBalance: 500.0,
+      holderName: "John Doe",
+      bankName: "Meezan Bank",
+      accountNumber: "PK45MEZN00000087654321",
       walletAddress: "",
       qrCode: "",
       status: "Rejected",
     },
     {
       no: 381,
-      uid: "1058812",
-      username: "Sivaprakash",
-      dateTime: "2025-09-16 14:15:14",
-      withdrawAmount: 499.0,
-      accountBalance: 18499,
-      holderName: "Sivaprakash",
-      bankName: "Federal Bank",
-      accountNumber: "17970100084842",
-      walletAddress: "",
-      qrCode: "",
-      status: "Rejected",
-    },
-    {
-      no: 380,
-      uid: "1058812",
-      username: "Sivaprakash",
-      dateTime: "2025-09-14 08:19:01",
-      withdrawAmount: 499.0,
-      accountBalance: 13499.0,
-      holderName: "Sivaprakash",
-      bankName: "Federal Bank",
-      accountNumber: "17970100084842",
-      walletAddress: "",
+      uid: "1058810",
+      username: "HiraAli",
+      dateTime: "2025-09-17 14:30:00",
+      withdrawAmount: 750.0,
+      accountBalance: 1200.0,
+      holderName: "Hira Ali",
+      bankName: "UBL",
+      accountNumber: "PK98UBL00000009876543",
+      walletAddress: "bc1qasdsadasd12345",
       qrCode: "",
       status: "Passed",
-    },
-    {
-      no: 379,
-      uid: "1058815",
-      username: "suryavk2580",
-      dateTime: "2025-09-14 07:31:05",
-      withdrawAmount: 19120.0,
-      accountBalance: 19120,
-      holderName: "SURYA KUMBHAKAR",
-      bankName: "Slice small finance bank",
-      accountNumber: "033325221098115",
-      walletAddress: "",
-      qrCode: "",
-      status: "Rejected",
-    },
-    {
-      no: 377,
-      uid: "1058815",
-      username: "suryavk2580",
-      dateTime: "2025-09-14 06:39:49",
-      withdrawAmount: 9820.0,
-      accountBalance: 9820,
-      holderName: "",
-      bankName: "",
-      accountNumber: "",
-      walletAddress: "",
-      qrCode: "",
-      status: "Passed",
-    },
-    {
-      no: 372,
-      uid: "1058812",
-      username: "Sivaprakash",
-      dateTime: "2025-09-14 05:24:34",
-      withdrawAmount: 5000.0,
-      accountBalance: 18499,
-      holderName: "Sivaprakash",
-      bankName: "Federal Bank",
-      accountNumber: "17970100084842",
-      walletAddress: "",
-      qrCode: "",
-      status: "Rejected",
-    },
-    {
-      no: 371,
-      uid: "1058814",
-      username: "Raza",
-      dateTime: "2025-09-13 14:41:49",
-      withdrawAmount: 392.0,
-      accountBalance: 123,
-      holderName: "",
-      bankName: "",
-      accountNumber: "",
-      walletAddress: "",
-      qrCode: "",
-      status: "Passed",
-    },
-    {
-      no: 365,
-      uid: "1058801",
-      username: "Ali 12345",
-      dateTime: "2025-09-12 16:20:34",
-      withdrawAmount: 116478.0,
-      accountBalance: 116478,
-      holderName: "Saiyad rukman ratt",
-      bankName: "Karnataka bank",
-      accountNumber: "653250010104810I",
-      walletAddress: "",
-      qrCode: "",
-      status: "Rejected",
     },
   ];
 
-  // local state to keep track of statuses per "no"
   const [rowStatuses, setRowStatuses] = useState(() => {
     const map = {};
     data.forEach((d) => {
-      if (
-        d.status === "Passed" ||
-        d.status === "Rejected" ||
-        d.status === "Frozen"
-      )
+      if (["Passed", "Rejected", "Frozen"].includes(d.status)) {
         map[d.no] = d.status;
-      else map[d.no] = ""; // pending/none
+      } else {
+        map[d.no] = "";
+      }
     });
     return map;
   });
 
-  // local state to track frozen status
   const [frozenStatuses, setFrozenStatuses] = useState(() => {
     const map = {};
     data.forEach((d) => {
-      map[d.no] = false; // initially not frozen
+      map[d.no] = d.status === "Frozen";
     });
     return map;
   });
@@ -184,30 +111,22 @@ const WithdrawalList = () => {
 
   const handleStatus = (no, newStatus) => {
     setRowStatuses((prev) => ({ ...prev, [no]: newStatus }));
-    // TODO: send API request to persist status if needed
   };
 
   const handleFreeze = (no) => {
-    setFrozenStatuses((prev) => ({
+    setFrozenStatuses((prev) => ({ ...prev, [no]: !prev[no] }));
+    setRowStatuses((prev) => ({
       ...prev,
-      [no]: !prev[no],
+      [no]: frozenStatuses[no] ? "" : "Frozen",
     }));
-    // If freezing, also set status to Frozen
-    if (!frozenStatuses[no]) {
-      setRowStatuses((prev) => ({ ...prev, [no]: "Frozen" }));
-    } else {
-      // If unfreezing, reset status to pending
-      setRowStatuses((prev) => ({ ...prev, [no]: "" }));
-    }
   };
 
-  // layout container style: takes sidebar into account on larger screens
   const containerStyle = {
     backgroundColor: "#f5f5f5",
     minHeight: "100vh",
-    padding: "20px",
+    padding: "16px",
     boxSizing: "border-box",
-    marginLeft: "0", // overridden by CSS media query for larger screens
+    marginLeft: "0",
   };
 
   const tableWrapperStyle = {
@@ -215,65 +134,161 @@ const WithdrawalList = () => {
     borderRadius: "4px",
     overflow: "hidden",
     boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+    marginTop: "12px",
   };
 
   const tableStyle = {
     width: "100%",
     fontSize: "12px",
     borderCollapse: "collapse",
-    minWidth: "900px", // allow horizontal scroll on small screens if table visible
+    minWidth: "900px",
   };
 
   return (
     <div>
+      {/* ✅ CSS styling */}
       <style>{`
-        @media (min-width: 1000px) {
-          .withdrawal-container { margin-left: 220px; }
-        }
-        @media (min-width: 769px) {
-          .wl-card-list { display: none; }
-          .wl-table-wrapper { display: block; }
-        }
-        @media (max-width: 768px) {
-          .wl-card-list { display: block; }
-          .wl-table-wrapper { display: none; }
-        }
-        .wl-card { background: #fff; border-radius: 6px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column; gap: 6px; word-break: break-word; }
-        .wl-card-row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-        .wl-card-label { color: #666; font-size: 12px; min-width: 120px; }
-        .wl-card-value { color: #333; font-size: 13px; text-align: right; flex: 1; }
-        .wl-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; display: inline-block; vertical-align: middle; }
-        .wl-table thead th { padding: 10px 12px; text-align: left; color: #666; font-weight: 500; white-space: nowrap; font-size: 13px; }
-        .wl-table tbody td { padding: 10px 12px; color: #333; font-size: 13px; vertical-align: middle; }
-        @media (max-width: 420px) { .wl-card-label { min-width: 100px; font-size: 11px; } .wl-card-value { font-size: 12px; } .wl-truncate { max-width: 120px; } }
-        .wl-header { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; }
-        .wl-search { display: flex; gap: 8px; align-items: center; background: white; padding: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-        .wl-search input { border: none; outline: none; font-size: 13px; }
-        .wl-actions { display: flex; gap: 8px; align-items: center; }
-        .wl-btn { background-color: #3498db; color: white; border: none; border-radius: 4px; padding: 6px 10px; font-size: 13px; cursor: pointer; }
-        .wl-pass { background-color: #27ae60; color: white; border: none; border-radius: 4px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
-        .wl-reject { background-color: #e74c3c; color: white; border: none; border-radius: 4px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
-        .wl-freeze { background-color: #f39c12; color: white; border: none; border-radius: 4px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
-        .wl-small { padding: 4px 8px; font-size: 12px; }
-        .wl-disabled { opacity: 0.6; cursor: not-allowed; }
-      `}</style>
+            @media (min-width: 1000px) {
+              .withdrawal-container { margin-left: 220px; }
+            }
+
+            @media (min-width: 769px) {
+              .wl-card-list { display: none; }
+              .wl-table-wrapper { display: block; }
+            }
+
+            @media (max-width: 768px) {
+              .wl-card-list { display: block; }
+              .wl-table-wrapper { display: none; }
+            }
+
+            .wl-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 12px;
+              margin-bottom: 12px;
+            }
+
+            .wl-search {
+              display: flex;
+              gap: 8px;
+              align-items: center;
+              background: white;
+              padding: 8px 10px;
+              border-radius: 6px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+              flex: 1;
+              max-width: 240px;
+            }
+
+            .wl-search input {
+              border: none;
+              outline: none;
+              font-size: 13px;
+              width: 100%;
+            }
+
+            .wl-table thead th {
+              padding: 10px 12px;
+              text-align: left;
+              color: #666;
+              font-weight: 500;
+              white-space: nowrap;
+              font-size: 13px;
+            }
+
+            .wl-table tbody td {
+              padding: 10px 12px;
+              color: #333;
+              font-size: 13px;
+              vertical-align: middle;
+              white-space: nowrap;
+            }
+
+            .wl-truncate {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              max-width: 160px;
+              display: inline-block;
+              vertical-align: middle;
+            }
+
+            .wl-card {
+              background: #fff;
+              border-radius: 6px;
+              padding: 12px;
+              margin-bottom: 12px;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+              word-break: break-word;
+            }
+
+            .wl-card-row {
+              display: flex;
+              justify-content: space-between;
+              gap: 8px;
+              align-items: center;
+            }
+
+            .wl-card-label {
+              color: #666;
+              font-size: 12px;
+              min-width: 100px;
+            }
+
+            .wl-card-value {
+              color: #333;
+              font-size: 13px;
+              text-align: right;
+              flex: 1;
+            }
+
+            @media (max-width: 420px) {
+              .wl-card-label { min-width: 90px; font-size: 11px; }
+              .wl-card-value { font-size: 12px; }
+              .wl-truncate { max-width: 100px; }
+            }
+
+            .wl-pass, .wl-reject, .wl-freeze, .wl-btn {
+              border: none;
+              border-radius: 4px;
+              padding: 4px 8px;
+              font-size: 12px;
+              cursor: pointer;
+              white-space: nowrap;
+            }
+            .wl-pass { background-color: #27ae60; color: white; }
+            .wl-reject { background-color: #e74c3c; color: white; }
+            .wl-freeze { background-color: #f39c12; color: white; }
+            .wl-btn { background-color: #3498db; color: white; }
+
+            .wl-disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          `}</style>
 
       <div className='withdrawal-container' style={containerStyle}>
+        {/* ✅ HEADER */}
         <div className='wl-header'>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <h2 style={{ margin: 0, fontSize: 18 }}>Withdrawal List</h2>
-            <div style={{ color: "#999", fontSize: 13 }}>
+            <span style={{ color: "#999", fontSize: 13 }}>
               Total: {filteredData.length}
-            </div>
+            </span>
           </div>
 
-          <div className='wl-actions'>
-            <div className='wl-search' style={{ minWidth: 180 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className='wl-search'>
               <input
                 placeholder='Search by username...'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ minWidth: 120 }}
               />
             </div>
             <button className='wl-btn' type='button'>
@@ -282,6 +297,7 @@ const WithdrawalList = () => {
           </div>
         </div>
 
+        {/* ✅ TABLE (Desktop) */}
         <div className='wl-table-wrapper' style={tableWrapperStyle}>
           <div style={{ overflowX: "auto" }}>
             <table className='wl-table' style={tableStyle}>
@@ -298,23 +314,21 @@ const WithdrawalList = () => {
                   <th>Date/Time</th>
                   <th>Withdraw Amount</th>
                   <th>Account Balance</th>
-                  <th>Account Holder Name</th>
-                  <th>Bank Name</th>
-                  <th>Account Number</th>
-                  <th>Wallet address</th>
-                  <th>Qr Code</th>
+                  <th>Account Holder</th>
+                  <th>Bank</th>
+                  <th>Account #</th>
+                  <th>Wallet</th>
+                  <th>QR Code</th>
                   <th>Status</th>
                 </tr>
               </thead>
-
               <tbody>
                 {filteredData.map((item) => {
                   const currentStatus = rowStatuses[item.no] || "";
                   const isFrozen = frozenStatuses[item.no];
-                  const isDecided =
-                    currentStatus === "Passed" ||
-                    currentStatus === "Rejected" ||
-                    currentStatus === "Frozen";
+                  const isDecided = ["Passed", "Rejected", "Frozen"].includes(
+                    currentStatus
+                  );
                   return (
                     <tr
                       key={item.no}
@@ -322,10 +336,10 @@ const WithdrawalList = () => {
                     >
                       <td>{item.no}</td>
                       <td>{item.uid}</td>
-                      <td style={{ whiteSpace: "nowrap" }}>{item.username}</td>
+                      <td>{item.username}</td>
                       <td>
                         <div>{item.dateTime.split(" ")[0]}</div>
-                        <div style={{ color: "#999", fontSize: "11px" }}>
+                        <div style={{ color: "#999", fontSize: 11 }}>
                           {item.dateTime.split(" ")[1]}
                         </div>
                       </td>
@@ -344,12 +358,7 @@ const WithdrawalList = () => {
                       <td>{item.qrCode || "-"}</td>
                       <td>
                         <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            flexWrap: "wrap",
-                          }}
+                          style={{ display: "flex", flexWrap: "wrap", gap: 6 }}
                         >
                           {isDecided ? (
                             <span
@@ -358,9 +367,7 @@ const WithdrawalList = () => {
                                 fontWeight: 600,
                               }}
                             >
-                              {currentStatus === "Passed" && "✅ Passed"}
-                              {currentStatus === "Rejected" && "❌ Rejected"}
-                              {currentStatus === "Frozen" && "❄️ Frozen"}
+                              {currentStatus}
                             </span>
                           ) : (
                             <span
@@ -369,42 +376,31 @@ const WithdrawalList = () => {
                               Pending
                             </span>
                           )}
-
                           <button
-                            className={`wl-pass wl-small ${
+                            className={`wl-pass ${
                               isDecided ? "wl-disabled" : ""
                             }`}
                             onClick={() => handleStatus(item.no, "Passed")}
                             disabled={isDecided}
-                            title='Mark as Passed'
                           >
                             Pass
                           </button>
                           <button
-                            className={`wl-reject wl-small ${
+                            className={`wl-reject ${
                               isDecided ? "wl-disabled" : ""
                             }`}
                             onClick={() => handleStatus(item.no, "Rejected")}
                             disabled={isDecided}
-                            title='Mark as Rejected'
                           >
                             Reject
                           </button>
                           <button
-                            className={`wl-freeze wl-small ${
+                            className={`wl-freeze ${
                               isFrozen ? "wl-disabled" : ""
                             }`}
                             onClick={() => handleFreeze(item.no)}
-                            title={isFrozen ? "Unfreeze" : "Freeze"}
                           >
                             {isFrozen ? "Unfreeze" : "Freeze"}
-                          </button>
-
-                          <button
-                            className='wl-btn wl-small'
-                            style={{ marginLeft: 4 }}
-                          >
-                            Order Status
                           </button>
                         </div>
                       </td>
@@ -416,52 +412,42 @@ const WithdrawalList = () => {
           </div>
         </div>
 
-        <div className='wl-card-list' style={{ marginTop: 8 }}>
+        {/* ✅ CARD LIST (Mobile) */}
+        <div className='wl-card-list'>
           {filteredData.map((item) => {
             const currentStatus = rowStatuses[item.no] || "";
             const isFrozen = frozenStatuses[item.no];
-            const isDecided =
-              currentStatus === "Passed" ||
-              currentStatus === "Rejected" ||
-              currentStatus === "Frozen";
+            const isDecided = ["Passed", "Rejected", "Frozen"].includes(
+              currentStatus
+            );
             return (
               <div className='wl-card' key={`card-${item.no}`}>
                 <div className='wl-card-row'>
-                  <div
-                    style={{ display: "flex", gap: 8, alignItems: "center" }}
-                  >
-                    <strong style={{ fontSize: 15 }}>{item.username}</strong>
-                    <div style={{ color: "#999", fontSize: 12 }}>
-                      #{item.uid}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ color: "#27ae60", fontWeight: 600 }}>
-                      ${item.withdrawAmount.toFixed(2)}
-                    </div>
-                    <div style={{ color: "#999", fontSize: 12 }}>
-                      {item.dateTime.split(" ")[0]}
-                    </div>
+                  <strong>{item.username}</strong>
+                  <span style={{ color: "#999", fontSize: 12 }}>
+                    #{item.uid}
+                  </span>
+                </div>
+                <div className='wl-card-row'>
+                  <div className='wl-card-label'>Amount</div>
+                  <div className='wl-card-value' style={{ color: "#27ae60" }}>
+                    ${item.withdrawAmount.toFixed(2)}
                   </div>
                 </div>
-
                 <div className='wl-card-row'>
-                  <div className='wl-card-label'>Account Holder</div>
+                  <div className='wl-card-label'>Date</div>
+                  <div className='wl-card-value'>
+                    {item.dateTime.split(" ")[0]}
+                  </div>
+                </div>
+                <div className='wl-card-row'>
+                  <div className='wl-card-label'>Holder</div>
                   <div className='wl-card-value'>{item.holderName || "-"}</div>
                 </div>
-
                 <div className='wl-card-row'>
                   <div className='wl-card-label'>Bank</div>
                   <div className='wl-card-value'>{item.bankName || "-"}</div>
                 </div>
-
-                <div className='wl-card-row'>
-                  <div className='wl-card-label'>Account #</div>
-                  <div className='wl-card-value'>
-                    {item.accountNumber || "-"}
-                  </div>
-                </div>
-
                 <div className='wl-card-row'>
                   <div className='wl-card-label'>Wallet</div>
                   <div className='wl-card-value wl-truncate'>
@@ -469,67 +455,43 @@ const WithdrawalList = () => {
                   </div>
                 </div>
 
-                <div className='wl-card-row'>
-                  <div className='wl-card-label'>Status</div>
-                  <div
-                    className='wl-card-value'
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      alignItems: "center",
-                      justifyContent: "flex-end",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    {isDecided ? (
-                      <span
-                        style={{
-                          color: getStatusColor(currentStatus),
-                          fontWeight: 600,
-                        }}
-                      >
-                        {currentStatus === "Passed" && "✅ Passed"}
-                        {currentStatus === "Rejected" && "❌ Rejected"}
-                        {currentStatus === "Frozen" && "❄️ Frozen"}
-                      </span>
-                    ) : (
-                      <span style={{ color: "#999", fontStyle: "italic" }}>
-                        Pending
-                      </span>
-                    )}
+                <div className='wl-card-row' style={{ marginTop: 8 }}>
+                  {isDecided ? (
+                    <span
+                      style={{
+                        color: getStatusColor(currentStatus),
+                        fontWeight: 600,
+                      }}
+                    >
+                      {currentStatus}
+                    </span>
+                  ) : (
+                    <span style={{ color: "#999", fontStyle: "italic" }}>
+                      Pending
+                    </span>
+                  )}
 
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      <button
-                        className={`wl-pass wl-small ${
-                          isDecided ? "wl-disabled" : ""
-                        }`}
-                        onClick={() => handleStatus(item.no, "Passed")}
-                        disabled={isDecided}
-                        title='Mark as Passed'
-                      >
-                        Pass
-                      </button>
-                      <button
-                        className={`wl-reject wl-small ${
-                          isDecided ? "wl-disabled" : ""
-                        }`}
-                        onClick={() => handleStatus(item.no, "Rejected")}
-                        disabled={isDecided}
-                        title='Mark as Rejected'
-                      >
-                        Reject
-                      </button>
-                      <button
-                        className={`wl-freeze wl-small ${
-                          isFrozen ? "wl-disabled" : ""
-                        }`}
-                        onClick={() => handleFreeze(item.no)}
-                        title={isFrozen ? "Unfreeze" : "Freeze"}
-                      >
-                        {isFrozen ? "Unfreeze" : "Freeze"}
-                      </button>
-                      <button className='wl-btn wl-small'>Order Status</button>
-                    </div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button
+                      className={`wl-pass ${isDecided ? "wl-disabled" : ""}`}
+                      onClick={() => handleStatus(item.no, "Passed")}
+                      disabled={isDecided}
+                    >
+                      Pass
+                    </button>
+                    <button
+                      className={`wl-reject ${isDecided ? "wl-disabled" : ""}`}
+                      onClick={() => handleStatus(item.no, "Rejected")}
+                      disabled={isDecided}
+                    >
+                      Reject
+                    </button>
+                    <button
+                      className={`wl-freeze ${isFrozen ? "wl-disabled" : ""}`}
+                      onClick={() => handleFreeze(item.no)}
+                    >
+                      {isFrozen ? "Unfreeze" : "Freeze"}
+                    </button>
                   </div>
                 </div>
               </div>
