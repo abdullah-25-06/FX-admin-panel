@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-import React, { useState } from "react";
-=======
 // Sidebar.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
->>>>>>> 4b828d7 (Initial commit to company repo)
 import {
   Home,
   Package,
@@ -24,18 +20,6 @@ import {
   CreditCard,
   FileSearch,
 } from "lucide-react";
-<<<<<<< HEAD
-import { useNavigate, useLocation } from "react-router-dom";
-
-const Sidebar = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [openMenu, setOpenMenu] = useState(null);
-
-  // Current active page from URL
-  const activePage = location.pathname.substring(1) || "systemHome";
-
-=======
 
 const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
   // Hooks
@@ -54,7 +38,6 @@ const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
   }
 
   // 📌 Menu Items
->>>>>>> 4b828d7 (Initial commit to company repo)
   const menuItems = [
     { id: "systemHome", label: "System Home", icon: Home },
 
@@ -70,10 +53,6 @@ const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
       ],
     },
 
-<<<<<<< HEAD
-    // Order Management Dropdown
-=======
->>>>>>> 4b828d7 (Initial commit to company repo)
     {
       id: "orderManagement",
       label: "Order Management",
@@ -84,10 +63,6 @@ const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
       ],
     },
 
-<<<<<<< HEAD
-    // Member Management Dropdown
-=======
->>>>>>> 4b828d7 (Initial commit to company repo)
     {
       id: "memberManagement",
       label: "Member Management",
@@ -100,11 +75,7 @@ const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
         { id: "rechargeList", label: "Recharge List", icon: BarChart },
         { id: "withdrawalList", label: "Withdrawal List", icon: Sliders },
         { id: "blacklist", label: "Blacklist", icon: Trash2 },
-<<<<<<< HEAD
-        { id: "manualDW", label: "Manual D/W", icon: Settings }, // ✅ Manual D/W
-=======
         { id: "manualdw", label: "Manual D/W", icon: Settings },
->>>>>>> 4b828d7 (Initial commit to company repo)
         { id: "dataReview", label: "Data Review", icon: FileSearch },
       ],
     },
@@ -112,21 +83,12 @@ const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
     { id: "agentManagement", label: "Agent Management", icon: UserCog },
     { id: "reportManagement", label: "Report Management", icon: BarChart },
 
-<<<<<<< HEAD
-    // Parameter Settings Dropdown
-=======
->>>>>>> 4b828d7 (Initial commit to company repo)
     {
       id: "parameterSettings",
       label: "Parameter Settings",
       icon: Sliders,
       children: [
         { id: "basicSettings", label: "Basic Settings", icon: Settings },
-<<<<<<< HEAD
-        { id: "parameterSettingsChild", label: "Parameter Settings", icon: Sliders },
-        { id: "invitationRewards", label: "Invitation Rewards", icon: BarChart },
-        { id: "announcementList", label: "Announcement List", icon: FileSearch },
-=======
         {
           id: "parameterSettingsChild",
           label: "Parameter Settings",
@@ -142,7 +104,6 @@ const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
           label: "Announcement List",
           icon: FileSearch,
         },
->>>>>>> 4b828d7 (Initial commit to company repo)
         { id: "carousel", label: "Carousel", icon: Package },
         { id: "addConfiguration", label: "Add Configuration", icon: Tags },
       ],
@@ -151,80 +112,6 @@ const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
     { id: "systemSettings", label: "System Settings", icon: Settings },
   ];
 
-<<<<<<< HEAD
-  const handleNavigation = (pageId) => {
-    // Navigate to page based on id
-    navigate(`/${pageId}`);
-  };
-
-  return (
-    <div className="sidebar bg-gray-900 text-white w-64 h-screen flex flex-col shadow-lg">
-      {/* Logo */}
-      <div className="logo flex items-center gap-2 px-6 py-8 border-b border-gray-700">
-        <div className="logo-circle bg-indigo-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl">
-          A
-        </div>
-        <span className="text-xl font-semibold tracking-wide">Admin Panel</span>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex flex-col mt-10 px-4 space-y-6">
-        {menuItems.map((item) => (
-          <div key={item.id}>
-            {/* Parent Item */}
-            <div
-              className={`flex items-center justify-between gap-5 px-6 py-4 rounded-lg cursor-pointer transition-all ${
-                activePage === item.id
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`}
-              onClick={() =>
-                item.children
-                  ? setOpenMenu(openMenu === item.id ? null : item.id)
-                  : handleNavigation(item.id)
-              }
-            >
-              <div className="flex items-center gap-4">
-                <item.icon size={22} />
-                <span className="text-base font-medium tracking-wide">
-                  {item.label}
-                </span>
-              </div>
-              {item.children && (
-                <div className="transition-transform duration-200">
-                  {openMenu === item.id ? (
-                    <ChevronDown size={20} />
-                  ) : (
-                    <ChevronRight size={20} />
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Submenu Items */}
-            {item.children && openMenu === item.id && (
-              <div className="ml-10 mt-3 flex flex-col space-y-3">
-                {item.children.map((subItem) => (
-                  <div
-                    key={subItem.id}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-md cursor-pointer transition-all ${
-                      activePage === subItem.id
-                        ? "bg-indigo-500 text-white"
-                        : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                    }`}
-                    onClick={() => handleNavigation(subItem.id)}
-                  >
-                    <subItem.icon size={18} />
-                    <span className="text-sm tracking-wide">
-                      {subItem.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-=======
   // 🔓 Auto-open parent if any child is active
   useEffect(() => {
     for (const item of menuItems) {
@@ -439,7 +326,6 @@ const Sidebar = ({ navigate: navigateProp, location: locationProp }) => {
             </div>
           );
         })}
->>>>>>> 4b828d7 (Initial commit to company repo)
       </div>
     </div>
   );
