@@ -1,11 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const RiskManagement = () => {
+  // State for all form fields
   const [lossCustomerIds, setLossCustomerIds] = useState("");
   const [profitCustomerIds, setProfitCustomerIds] = useState("");
   const [minRiskControl, setMinRiskControl] = useState("");
   const [riskControlProbability, setRiskControlProbability] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [errors, setErrors] = useState({});
 
+  // Time settings state
   const [timeSettings, setTimeSettings] = useState({
     time1: { takeProfit: "10.20", stopLoss: "20.30" },
     time2: { takeProfit: "20.30", stopLoss: "20.30" },
@@ -13,28 +18,208 @@ const RiskManagement = () => {
     time4: { takeProfit: "40.50", stopLoss: "20.30" },
   });
 
+  // Load saved data from localStorage on component mount
+  useEffect(() => {
+    const savedData = localStorage.getItem("riskManagementSettings");
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setLossCustomerIds(parsedData.lossCustomerIds || "");
+        setProfitCustomerIds(parsedData.profitCustomerIds || "");
+        setMinRiskControl(parsedData.minRiskControl || "");
+        setRiskControlProbability(parsedData.riskControlProbability || "");
+        setTimeSettings(
+          parsedData.timeSettings || {
+            time1: { takeProfit: "10.20", stopLoss: "20.30" },
+            time2: { takeProfit: "20.30", stopLoss: "20.30" },
+            time3: { takeProfit: "30.40", stopLoss: "20.30" },
+            time4: { takeProfit: "40.50", stopLoss: "20.30" },
+          }
+        );
+      } catch (error) {
+        console.error("Error loading saved settings:", error);
+      }
+    }
+  }, []);
+
+  // Validation functions
+  const validateCustomerIds = (ids) => {
+    if (!ids.trim()) return true; // Empty is allowed
+    const idPattern = /^(\d+)(\|\d+)*$/;
+    return idPattern.test(ids);
+  };
+
+  const validateProbabilityFormat = (probability) => {
+    if (!probability.trim()) return true; // Empty is allowed
+
+    const segments = probability.split("/");
+    const segmentPattern = /^\d+-\d+:\d+$/;
+
+    for (const segment of segments) {
+      if (!segmentPattern.test(segment.trim())) {
+        return false;
+      }
+
+      // Check if range start <= range end
+      const [range, prob] = segment.split(":");
+      const [start, end] = range.split("-").map(Number);
+
+      if (start >= end) {
+        return false;
+      }
+
+      if (prob < 0 || prob > 100) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const validateTimeSettings = (settings) => {
+    for (const time in settings) {
+      const { takeProfit, stopLoss } = settings[time];
+      const tp = parseFloat(takeProfit);
+      const sl = parseFloat(stopLoss);
+
+      if (isNaN(tp) || isNaN(sl) || tp < 0 || sl < 0) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Handle time setting changes with validation
   const handleTimeSettingChange = (time, field, value) => {
+    // Allow only numbers and decimal points
+    const numericValue = value.replace(/[^0-9.]/g, "");
+
     setTimeSettings((prev) => ({
       ...prev,
       [time]: {
         ...prev[time],
-        [field]: value,
+        [field]: numericValue,
       },
     }));
+
+    // Clear errors for this field
+    if (errors.timeSettings) {
+      setErrors((prev) => ({
+        ...prev,
+        timeSettings: undefined,
+      }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({
-      lossCustomerIds,
-      profitCustomerIds,
-      timeSettings,
-      minRiskControl,
-      riskControlProbability,
-    });
-    alert("Settings saved successfully!");
+    setIsSubmitting(true);
+    setSaveMessage("");
+    setErrors({});
+
+    // Validate all fields
+    const newErrors = {};
+
+    // Validate customer IDs
+    if (!validateCustomerIds(lossCustomerIds)) {
+      newErrors.lossCustomerIds =
+        "Invalid format. Use numbers separated by | (e.g., 8888|9999)";
+    }
+
+    if (!validateCustomerIds(profitCustomerIds)) {
+      newErrors.profitCustomerIds =
+        "Invalid format. Use numbers separated by | (e.g., 8888|9999)";
+    }
+
+    // Validate time settings
+    if (!validateTimeSettings(timeSettings)) {
+      newErrors.timeSettings =
+        "All time settings must be valid positive numbers";
+    }
+
+    // Validate probability format
+    if (!validateProbabilityFormat(riskControlProbability)) {
+      newErrors.riskControlProbability =
+        "Invalid format. Use format: start-end:probability (e.g., 0-100:50)";
+    }
+
+    // If there are errors, stop submission
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Prepare data for saving
+      const formData = {
+        lossCustomerIds,
+        profitCustomerIds,
+        minRiskControl,
+        riskControlProbability,
+        timeSettings,
+        lastUpdated: new Date().toISOString(),
+      };
+
+      // Save to localStorage (simulating database save)
+      localStorage.setItem("riskManagementSettings", JSON.stringify(formData));
+
+      setSaveMessage("Settings saved successfully!");
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveMessage(""), 3000);
+    } catch (error) {
+      setSaveMessage("Error saving settings. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // Reset form to default values
+  const handleReset = () => {
+    setLossCustomerIds("");
+    setProfitCustomerIds("");
+    setMinRiskControl("");
+    setRiskControlProbability("");
+    setTimeSettings({
+      time1: { takeProfit: "10.20", stopLoss: "20.30" },
+      time2: { takeProfit: "20.30", stopLoss: "20.30" },
+      time3: { takeProfit: "30.40", stopLoss: "20.30" },
+      time4: { takeProfit: "40.50", stopLoss: "20.30" },
+    });
+    setErrors({});
+    setSaveMessage("");
+    localStorage.removeItem("riskManagementSettings");
+  };
+
+  // Calculate statistics for display
+  const getStatistics = () => {
+    const lossCustomers = lossCustomerIds
+      ? lossCustomerIds.split("|").filter((id) => id.trim()).length
+      : 0;
+    const profitCustomers = profitCustomerIds
+      ? profitCustomerIds.split("|").filter((id) => id.trim()).length
+      : 0;
+
+    const totalProbabilitySegments = riskControlProbability
+      ? riskControlProbability.split("/").length
+      : 0;
+
+    return {
+      lossCustomers,
+      profitCustomers,
+      totalProbabilitySegments,
+      totalTimeSettings: Object.keys(timeSettings).length,
+    };
+  };
+
+  const stats = getStatistics();
+
+  // Enhanced styles
   const styles = {
     container: {
       padding: "20px",
@@ -50,12 +235,26 @@ const RiskManagement = () => {
       borderRadius: "8px",
       boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       marginBottom: "20px",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
     },
     title: {
       fontSize: "24px",
       fontWeight: "bold",
       color: "#333",
-      marginBottom: "10px",
+      marginBottom: "0",
+    },
+    stats: {
+      display: "flex",
+      gap: "15px",
+      fontSize: "14px",
+      color: "#666",
+    },
+    statItem: {
+      padding: "5px 10px",
+      backgroundColor: "#f8f9fa",
+      borderRadius: "4px",
     },
     section: {
       backgroundColor: "white",
@@ -100,6 +299,16 @@ const RiskManagement = () => {
       border: "1px solid #ddd",
       borderRadius: "4px",
       fontSize: "14px",
+      transition: "border-color 0.2s",
+    },
+    inputError: {
+      borderColor: "#d32f2f",
+      backgroundColor: "#ffebee",
+    },
+    errorText: {
+      color: "#d32f2f",
+      fontSize: "12px",
+      marginTop: "5px",
     },
     table: {
       width: "100%",
@@ -126,6 +335,16 @@ const RiskManagement = () => {
       borderRadius: "4px",
       fontSize: "14px",
       textAlign: "center",
+      transition: "border-color 0.2s",
+    },
+    timeInputError: {
+      borderColor: "#d32f2f",
+      backgroundColor: "#ffebee",
+    },
+    buttonGroup: {
+      display: "flex",
+      gap: "10px",
+      alignItems: "center",
     },
     submitButton: {
       backgroundColor: "#007bff",
@@ -136,14 +355,51 @@ const RiskManagement = () => {
       fontSize: "16px",
       cursor: "pointer",
       transition: "background-color 0.2s",
+      minWidth: "120px",
+    },
+    submitButtonDisabled: {
+      backgroundColor: "#6c757d",
+      cursor: "not-allowed",
     },
     submitButtonHover: {
       backgroundColor: "#0056b3",
     },
+    resetButton: {
+      backgroundColor: "#6c757d",
+      color: "white",
+      border: "none",
+      padding: "12px 20px",
+      borderRadius: "4px",
+      fontSize: "16px",
+      cursor: "pointer",
+      transition: "background-color 0.2s",
+    },
+    resetButtonHover: {
+      backgroundColor: "#545b62",
+    },
+    successMessage: {
+      backgroundColor: "#d4edda",
+      color: "#155724",
+      padding: "10px 15px",
+      borderRadius: "4px",
+      border: "1px solid #c3e6cb",
+      marginBottom: "15px",
+    },
+    loadingMessage: {
+      backgroundColor: "#d1ecf1",
+      color: "#0c5460",
+      padding: "10px 15px",
+      borderRadius: "4px",
+      border: "1px solid #bee5eb",
+      marginBottom: "15px",
+    },
   };
 
+  // Hover handlers for buttons
   const handleButtonHover = (e, hoverStyle) => {
-    e.target.style.backgroundColor = hoverStyle.backgroundColor;
+    if (!isSubmitting) {
+      e.target.style.backgroundColor = hoverStyle.backgroundColor;
+    }
   };
 
   const handleButtonLeave = (e, originalColor) => {
@@ -154,7 +410,30 @@ const RiskManagement = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1 style={styles.title}>Risk Management</h1>
+        <div style={styles.stats}>
+          <div style={styles.statItem}>
+            Loss Customers: {stats.lossCustomers}
+          </div>
+          <div style={styles.statItem}>
+            Profit Customers: {stats.profitCustomers}
+          </div>
+          <div style={styles.statItem}>
+            Probability Segments: {stats.totalProbabilitySegments}
+          </div>
+        </div>
       </div>
+
+      {saveMessage && (
+        <div
+          style={
+            saveMessage.includes("Error")
+              ? styles.loadingMessage
+              : styles.successMessage
+          }
+        >
+          {saveMessage}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         {/* Designated Customer Losses Section */}
@@ -172,10 +451,24 @@ const RiskManagement = () => {
             <input
               type='text'
               value={lossCustomerIds}
-              onChange={(e) => setLossCustomerIds(e.target.value)}
+              onChange={(e) => {
+                setLossCustomerIds(e.target.value);
+                if (errors.lossCustomerIds) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    lossCustomerIds: undefined,
+                  }));
+                }
+              }}
               placeholder='e.g., 8888|9999'
-              style={styles.input}
+              style={{
+                ...styles.input,
+                ...(errors.lossCustomerIds ? styles.inputError : {}),
+              }}
             />
+            {errors.lossCustomerIds && (
+              <div style={styles.errorText}>{errors.lossCustomerIds}</div>
+            )}
           </div>
         </div>
 
@@ -194,10 +487,24 @@ const RiskManagement = () => {
             <input
               type='text'
               value={profitCustomerIds}
-              onChange={(e) => setProfitCustomerIds(e.target.value)}
+              onChange={(e) => {
+                setProfitCustomerIds(e.target.value);
+                if (errors.profitCustomerIds) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    profitCustomerIds: undefined,
+                  }));
+                }
+              }}
               placeholder='e.g., 8888|9999'
-              style={styles.input}
+              style={{
+                ...styles.input,
+                ...(errors.profitCustomerIds ? styles.inputError : {}),
+              }}
             />
+            {errors.profitCustomerIds && (
+              <div style={styles.errorText}>{errors.profitCustomerIds}</div>
+            )}
           </div>
 
           {/* Time Settings Table */}
@@ -227,7 +534,10 @@ const RiskManagement = () => {
                           e.target.value
                         )
                       }
-                      style={styles.timeInput}
+                      style={{
+                        ...styles.timeInput,
+                        ...(errors.timeSettings ? styles.timeInputError : {}),
+                      }}
                     />
                   </td>
                   <td style={styles.tableCell}>Stop Loss</td>
@@ -242,13 +552,19 @@ const RiskManagement = () => {
                           e.target.value
                         )
                       }
-                      style={styles.timeInput}
+                      style={{
+                        ...styles.timeInput,
+                        ...(errors.timeSettings ? styles.timeInputError : {}),
+                      }}
                     />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {errors.timeSettings && (
+            <div style={styles.errorText}>{errors.timeSettings}</div>
+          )}
         </div>
 
         {/* Risk Control Settings */}
@@ -268,6 +584,7 @@ const RiskManagement = () => {
               onChange={(e) => setMinRiskControl(e.target.value)}
               placeholder='Enter minimum amount'
               style={styles.input}
+              min='0'
             />
           </div>
 
@@ -287,10 +604,26 @@ const RiskManagement = () => {
             <input
               type='text'
               value={riskControlProbability}
-              onChange={(e) => setRiskControlProbability(e.target.value)}
+              onChange={(e) => {
+                setRiskControlProbability(e.target.value);
+                if (errors.riskControlProbability) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    riskControlProbability: undefined,
+                  }));
+                }
+              }}
               placeholder='e.g., 0-100:50/100-200:30'
-              style={styles.input}
+              style={{
+                ...styles.input,
+                ...(errors.riskControlProbability ? styles.inputError : {}),
+              }}
             />
+            {errors.riskControlProbability && (
+              <div style={styles.errorText}>
+                {errors.riskControlProbability}
+              </div>
+            )}
             <div style={{ fontSize: "12px", color: "#666", marginTop: "5px" }}>
               Example:
               10-1000:50/1000-2000:30/2000-5000:20/5000-10000:10/10000-100000:5
@@ -300,16 +633,38 @@ const RiskManagement = () => {
 
         {/* Submit Button */}
         <div style={styles.section}>
-          <button
-            type='submit'
-            style={styles.submitButton}
-            onMouseOver={(e) => handleButtonHover(e, styles.submitButtonHover)}
-            onMouseOut={(e) =>
-              handleButtonLeave(e, styles.submitButton.backgroundColor)
-            }
-          >
-            Submit
-          </button>
+          <div style={styles.buttonGroup}>
+            <button
+              type='submit'
+              style={{
+                ...styles.submitButton,
+                ...(isSubmitting ? styles.submitButtonDisabled : {}),
+              }}
+              onMouseOver={(e) =>
+                !isSubmitting && handleButtonHover(e, styles.submitButtonHover)
+              }
+              onMouseOut={(e) =>
+                !isSubmitting &&
+                handleButtonLeave(e, styles.submitButton.backgroundColor)
+              }
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save Settings"}
+            </button>
+
+            <button
+              type='button'
+              style={styles.resetButton}
+              onMouseOver={(e) => handleButtonHover(e, styles.resetButtonHover)}
+              onMouseOut={(e) =>
+                handleButtonLeave(e, styles.resetButton.backgroundColor)
+              }
+              onClick={handleReset}
+              disabled={isSubmitting}
+            >
+              Reset to Default
+            </button>
+          </div>
         </div>
       </form>
     </div>
