@@ -1,3 +1,5 @@
+import axios from "axios";
+import { ChevronsUp } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
 // Initial data
@@ -55,8 +57,16 @@ const initialStats = [
   { label: "Handling fee", value: "$5.25", color: "#666" },
 ];
 
+const profitMarginEnum = {
+  120: 20,
+  160: 30,
+  200: 40,
+  240: 50,
+  2400: 500
+}
+
 export default function OpenOrder() {
-  const [trades, setTrades] = useState(initialTrades);
+  const [trades, setTrades] = useState([]);
   const [stats, setStats] = useState(initialStats);
   const [selectedTrades, setSelectedTrades] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -236,19 +246,18 @@ export default function OpenOrder() {
     fontWeight: "600",
   });
 
-  const profitLossStyle = (amount) => ({
-    color: amount.startsWith("-") ? "#e74c3c" : "#27ae60",
+  const profitLossStyle = (status) => ({
+    color: status === 'TOTAL_LOSS' ? "#e74c3c" : "#27ae60",
     fontWeight: "bold",
   });
 
   // Filter trades based on search and filters
   const filteredTrades = trades.filter((trade) => {
     const matchesSearch =
-      trade.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      trade.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      trade.uid.includes(searchTerm);
+      trade?.userId.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      trade?.coin?.toLowerCase().includes(searchTerm.toLowerCase()) || trade._id.includes(searchTerm);
 
-    const matchesState = filterState === "All" || trade.state === filterState;
+    const matchesState = filterState === "All" || trade.status === filterState;
     const matchesDirection =
       filterDirection === "All" || trade.direction === filterDirection;
 
@@ -295,9 +304,9 @@ export default function OpenOrder() {
   const updateStatistics = () => {
     const totalProfitLoss = trades.reduce((sum, trade) => {
       const amount = parseFloat(
-        trade.profitLoss.replace("$", "").replace(",", "").replace("-", "")
+        trade.profitLoss?.replace("$", "").replace(",", "").replace("-", "")
       );
-      return trade.profitLoss.startsWith("-") ? sum - amount : sum + amount;
+      return trade.profitLoss?.startsWith("-") ? sum - amount : sum + amount;
     }, 0);
 
     const openTrades = trades.filter((trade) => trade.state === "Open").length;
@@ -345,44 +354,57 @@ export default function OpenOrder() {
     setActiveDropdown(activeDropdown === tradeId ? null : tradeId);
   };
 
-  const handleMenuAction = (action, trade) => {
-    setActiveDropdown(null);
-    setSelectedOptions((prev) => ({ ...prev, [trade.id]: action }));
+  const handleMenuAction = async (action, trade) => {
+    try {
+      await axios.patch(`${process.env.REACT_APP_BASE_URL}/order-set/set-proposed-status/${trade._id}`, {
+        proposedStatus: action
+      },
+        {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('auth')
+          },
 
-    const totalProfit = trades.reduce((sum, t) => {
-      const profit = parseFloat(
-        t.profitLoss.replace("$", "").replace(",", "").replace("-", "")
-      );
-      return t.profitLoss.startsWith("-") ? sum - profit : sum + profit;
-    }, 0);
+        })
+      setTrades(() => {
+        return filteredTrades.map((elem) => {
+          if (elem._id === trade._id) {
+            return { ...elem, proposed_status: action }
+          }
+          return elem
+        })
+      })
+      switch (action) {
+        case "TOTAL_PROFIT":
+          alert(
+            `Total Profit for trade: $${Math.max(0, trade.amount).toFixed(2)}`
+          );
+          break;
+        case "TOTAL_LOSS":
+          alert(
+            `Total Loss for trade: $${Math.max(0, trade.amount).toFixed(2)}`
+          );
+          break;
+        // case "Default":
+        //   alert(
+        //     `Trade Details:\nID: ${trade.id}\nProduct: ${trade.product}\nDirection: ${trade.direction}\nP/L: ${trade.profitLoss}`
+        //   );
+        //   break;
+        default:
+          break;
+      }
 
-    switch (action) {
-      case "Total Profit":
-        alert(
-          `Total Profit for all trades: $${Math.max(0, totalProfit).toFixed(2)}`
-        );
-        break;
-      case "Total Loss":
-        alert(
-          `Total Loss for all trades: $${Math.max(0, -totalProfit).toFixed(2)}`
-        );
-        break;
-      case "Default":
-        alert(
-          `Trade Details:\nID: ${trade.id}\nProduct: ${trade.product}\nDirection: ${trade.direction}\nP/L: ${trade.profitLoss}`
-        );
-        break;
-      default:
-        break;
+
+    } catch (error) {
+      console.log(error)
     }
   };
 
-  // P/L button functionality
-  const handlePLButton = (trade) => {
-    alert(
-      `Profit/Loss for Trade #${trade.id} (${trade.product}): ${trade.profitLoss}`
-    );
-  };
+  // // P/L button functionality
+  // const handlePLButton = (trade) => {
+  //   alert(
+  //     `Profit/Loss for Trade #${trade.id} (${trade.product}): ${trade.profitLoss}`
+  //   );
+  // };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -400,6 +422,27 @@ export default function OpenOrder() {
   useEffect(() => {
     updateStatistics();
   }, [trades]);
+
+  useEffect(() => {
+    const getAllOrders = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BASE_URL}/order-set/all-ongoing-orders/ON_GOING`
+          , {
+            headers: {
+              Authorization: 'Bearer ' + localStorage.getItem('auth')
+            }
+          });
+        console.log(response.data.orders)
+        setTrades(response.data.orders)
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+        setTrades([])
+      }
+    };
+
+    getAllOrders();
+  }, []);
 
   // Get display text for dropdown button
   const getDropdownButtonText = (tradeId) => {
@@ -429,8 +472,8 @@ export default function OpenOrder() {
             onChange={(e) => setFilterState(e.target.value)}
           >
             <option value='All'>All States</option>
-            <option value='Open'>Open</option>
-            <option value='Closed'>Closed</option>
+            <option value='ON_GOING'>ON_GOING</option>
+            <option value='COMPLETED'>COMPLETED</option>
           </select>
           <select
             style={filterSelectStyle}
@@ -438,8 +481,8 @@ export default function OpenOrder() {
             onChange={(e) => setFilterDirection(e.target.value)}
           >
             <option value='All'>All Directions</option>
-            <option value='Buy'>Buy</option>
-            <option value='Sell'>Sell</option>
+            <option value='BUY'>BUY</option>
+            <option value='SELL'>SELL</option>
           </select>
           <button
             style={closeButtonStyle}
@@ -468,7 +511,6 @@ export default function OpenOrder() {
               </th>
               {[
                 "No.",
-                "UID",
                 "Username",
                 "Time",
                 "Product",
@@ -499,8 +541,8 @@ export default function OpenOrder() {
                   (e.currentTarget.style.background = "#eef5ff")
                 }
                 onMouseLeave={(e) =>
-                  (e.currentTarget.style.background =
-                    idx % 2 === 0 ? "#fff" : "#f9f9f9")
+                (e.currentTarget.style.background =
+                  idx % 2 === 0 ? "#fff" : "#f9f9f9")
                 }
               >
                 <td style={thTdBase}>
@@ -510,33 +552,32 @@ export default function OpenOrder() {
                     onChange={() => handleTradeSelect(trade.id)}
                   />
                 </td>
-                <td style={thTdBase}>{trade.id}</td>
-                <td style={thTdBase}>{trade.uid}</td>
-                <td style={thTdBase}>{trade.username}</td>
-                <td style={thTdBase}>{trade.time}</td>
+                <td style={thTdBase}>{trade._id}</td>
+                <td style={thTdBase}>{trade.userId.user_name}</td>
+                <td style={thTdBase}>{trade.start_time}</td>
                 <td style={{ ...thTdBase, fontWeight: "500" }}>
-                  {trade.product}
+                  {trade.coin}
                 </td>
-                <td style={{ ...thTdBase, ...stateStyle(trade.state) }}>
-                  {trade.state}
+                <td style={{ ...thTdBase, ...stateStyle(trade.status) }}>
+                  {trade.status}
                 </td>
                 <td style={thTdBase}>
                   <span style={directionStyle(trade.direction)}>
                     {trade.direction}
                   </span>
                 </td>
-                <td style={thTdBase}>{trade.duration}</td>
-                <td style={thTdBase}>{trade.opening}</td>
+                <td style={thTdBase}>{trade.order_duration}</td>
+                <td style={thTdBase}>{trade.opening_price}</td>
                 <td style={{ ...thTdBase, color: "#e74c3c" }}>
                   {trade.closing}
                 </td>
                 <td style={{ ...thTdBase, color: "#e67e22" }}>
-                  {trade.percentage}
+                  {profitMarginEnum[trade.order_duration]}
                 </td>
                 <td
-                  style={{ ...thTdBase, ...profitLossStyle(trade.profitLoss) }}
+                  style={{ ...thTdBase, ...profitLossStyle(trade.proposed_status) }}
                 >
-                  {trade.profitLoss}
+                  {trade.proposed_status}
                 </td>
                 <td style={thTdBase}>
                   <div
@@ -556,14 +597,14 @@ export default function OpenOrder() {
                         onMouseLeave={(e) =>
                           (e.currentTarget.style.background = "#3498db")
                         }
-                        onClick={(e) => handleDropdownToggle(trade.id, e)}
+                        onClick={(e) => handleDropdownToggle(trade._id, e)}
                       >
                         {getDropdownButtonText(trade.id)}
                       </button>
 
-                      {activeDropdown === trade.id && (
+                      {activeDropdown === trade._id && (
                         <div style={dropdownMenuStyle}>
-                          {["Default", "Total Loss", "Total Profit"].map(
+                          {["Default", "TOTAL_LOSS", "TOTAL_PROFIT"].map(
                             (option) => (
                               <div
                                 key={option}
@@ -583,10 +624,10 @@ export default function OpenOrder() {
                                   (e.currentTarget.style.background = "#f5f6fa")
                                 }
                                 onMouseLeave={(e) =>
-                                  (e.currentTarget.style.background =
-                                    selectedOptions[trade.id] === option
-                                      ? "#e3f2fd"
-                                      : "#fff")
+                                (e.currentTarget.style.background =
+                                  selectedOptions[trade.id] === option
+                                    ? "#e3f2fd"
+                                    : "#fff")
                                 }
                               >
                                 {option}
@@ -598,7 +639,7 @@ export default function OpenOrder() {
                     </div>
 
                     {/* P/L Button After Dropdown */}
-                    <button
+                    {/* <button
                       style={plButtonStyle}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.background = "#c0392b")
@@ -606,10 +647,10 @@ export default function OpenOrder() {
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.background = "#e74c3c")
                       }
-                      onClick={() => handlePLButton(trade)}
+                      onClick={() => handlePLButton(trade)}   
                     >
                       P/L
-                    </button>
+                    </button> */}
                   </div>
                 </td>
               </tr>
@@ -624,7 +665,7 @@ export default function OpenOrder() {
       </div>
 
       {/* Stats Section */}
-      <div style={statsGridStyle}>
+      {/* <div style={statsGridStyle}>
         {stats.map((item, idx) => (
           <div key={idx} style={statBoxStyle(item.color)}>
             <div
@@ -641,7 +682,7 @@ export default function OpenOrder() {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }

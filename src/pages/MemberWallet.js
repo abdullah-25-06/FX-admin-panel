@@ -1,3 +1,5 @@
+import axios from "axios";
+import { Wallet } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
 const MemberWallet = () => {
@@ -88,41 +90,84 @@ const MemberWallet = () => {
     },
   ];
 
-  // Load data from localStorage on component mount
   useEffect(() => {
-    setIsLoading(true);
-    const savedAccounts = localStorage.getItem("memberWalletAccounts");
-
-    if (savedAccounts) {
+    const fetchWalletData = async () => {
+      setIsLoading(true);
       try {
-        setAccounts(JSON.parse(savedAccounts));
-      } catch (error) {
-        console.error("Error loading saved accounts:", error);
-        setAccounts(initialAccounts);
-      }
-    } else {
-      setAccounts(initialAccounts);
-    }
+        const response = await fetch(`${process.env.REACT_APP_BASE_URL}/with-drawal/get-wallet`, {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('auth'),
+            'Content-Type': 'application/json'
+          }
+        });
 
-    setIsLoading(false);
+        if (!response.ok) {
+          throw new Error('Failed to fetch wallet data');
+        }
+
+        const data = await response.json();
+        console.log(data.message.bankDetails)
+        const walletAccounts = data.message.bankDetails
+          .filter(item => item.type === 'WALLET')
+          .map((item, index) => ({
+            serialNumber: index + 1,
+            uid: item._id,
+            walletAddress: item.wallet_address,
+            createdAt: new Date(item.createdAt).toISOString().split('T')[0],
+            status: item.is_active === true ? 'Active' : 'InActive',
+            _id: item._id
+          }));
+        console.log(walletAccounts)
+        setAccounts(walletAccounts);
+      } catch (error) {
+        console.error('Error fetching wallet data:', error);
+        setMessage('Failed to load wallet data');
+        setTimeout(() => setMessage(''), 3000);
+        // Use initial accounts as fallback
+        // setAccounts(initialAccounts);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWalletData();
   }, []);
 
-  // Save to localStorage whenever accounts change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem("memberWalletAccounts", JSON.stringify(accounts));
-    }
-  }, [accounts, isLoading]);
+  // Load data from localStorage on component mount
+  // useEffect(() => {
+  //   setIsLoading(true);
+  //   const savedAccounts = localStorage.getItem("memberWalletAccounts");
+
+  //   if (savedAccounts) {
+  //     try {
+  //       setAccounts(JSON.parse(savedAccounts));
+  //     } catch (error) {
+  //       console.error("Error loading saved accounts:", error);
+  //       setAccounts(initialAccounts);
+  //     }
+  //   } else {
+  //     setAccounts(initialAccounts);
+  //   }
+
+  //   setIsLoading(false);
+  // }, []);
+
+  // // Save to localStorage whenever accounts change
+  // useEffect(() => {
+  //   if (!isLoading) {
+  //     localStorage.setItem("memberWalletAccounts", JSON.stringify(accounts));
+  //   }
+  // }, [accounts, isLoading]);
 
   // Filter and search functionality
   const filteredAccounts = accounts
     .filter(
       (account) =>
-        account.uid.toString().includes(searchTerm) ||
-        account.walletAddress
-          .toLowerCase()
+        account.uid?.toString().includes(searchTerm) ||
+        account?.walletAddress?.toLowerCase()
           .includes(searchTerm.toLowerCase()) ||
-        account.serialNumber.toString().includes(searchTerm)
+        account.serialNumber?.toString().includes(searchTerm)
     )
     .sort((a, b) => {
       let aValue = a[sortField];
@@ -133,8 +178,8 @@ const MemberWallet = () => {
         aValue = Number(aValue);
         bValue = Number(bValue);
       } else {
-        aValue = String(aValue).toLowerCase();
-        bValue = String(bValue).toLowerCase();
+        aValue = String(aValue)?.toLowerCase();
+        bValue = String(bValue)?.toLowerCase();
       }
 
       if (sortOrder === "asc") {
@@ -219,13 +264,20 @@ const MemberWallet = () => {
     setTimeout(() => setMessage(""), 3000);
   };
 
-  const handleEdit = (account) => {
-    setEditingAccount(account.serialNumber);
-    setEditForm({
-      uid: account.uid.toString(),
-      walletAddress: account.walletAddress,
-    });
-    setMessage("");
+  const handleEdit = async (account, status) => {
+    try {
+      console.log(account, status)
+      await axios.patch(`${process.env.REACT_APP_BASE_URL}/with-drawal/approve-wallet/${account.uid}`, {
+        walletStatus: status
+      }, {
+        headers: {
+          'Authorization': 'Bearer ' + localStorage.getItem('auth'),
+        }
+      })
+
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const handleSaveEdit = (serialNumber) => {
@@ -249,10 +301,10 @@ const MemberWallet = () => {
     const updatedAccounts = accounts.map((account) =>
       account.serialNumber === serialNumber
         ? {
-            ...account,
-            uid: parseInt(editForm.uid) || editForm.uid,
-            walletAddress: editForm.walletAddress,
-          }
+          ...account,
+          uid: parseInt(editForm.uid) || editForm.uid,
+          walletAddress: editForm.walletAddress,
+        }
         : account
     );
 
@@ -756,8 +808,9 @@ const MemberWallet = () => {
                 Status
               </th>
               <th style={{ ...styles.tableHeaderCell, ...styles.operateCol }}>
-                Operate
+                Toggle Activation
               </th>
+
             </tr>
           </thead>
           <tbody>
@@ -810,7 +863,7 @@ const MemberWallet = () => {
                   <td style={{ ...styles.tableCell, ...styles.statusCol }}>
                     <span
                       style={
-                        account.status === "Active"
+                        account.status === 'Active'
                           ? styles.statusActive
                           : styles.statusInactive
                       }
@@ -819,7 +872,7 @@ const MemberWallet = () => {
                     </span>
                   </td>
                   <td style={{ ...styles.tableCell, ...styles.operateCol }}>
-                    {editingAccount === account.serialNumber ? (
+                    {/* {editingAccount === account.serialNumber ? (
                       <>
                         <button
                           style={styles.saveButton}
@@ -849,7 +902,14 @@ const MemberWallet = () => {
                           Delete
                         </button>
                       </>
-                    )}
+                    )} */}
+                    <button
+                      style={styles.editButton}
+                      onClick={() => handleEdit(account, account.status === 'Active' ? false : true)}
+                    >
+                      {account.status === 'Active' ? 'DeActivate' : 'Activate'}
+                    </button>
+
                   </td>
                 </tr>
               ))
