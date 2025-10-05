@@ -1,7 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const RecycleBin = () => {
-  const [products, setProducts] = useState([
+  // State management
+  const [products, setProducts] = useState([]);
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState({});
+
+  // Initial data
+  const initialProducts = [
     {
       id: 16,
       productName: "ARM/USDT",
@@ -11,6 +22,7 @@ const RecycleBin = () => {
       minRiskControl: "0.00001",
       maxRiskControl: "0.00005",
       operate: "Click Restore",
+      deletedAt: "2024-01-15 10:30:00",
     },
     {
       id: 22,
@@ -21,6 +33,7 @@ const RecycleBin = () => {
       minRiskControl: "0.0001",
       maxRiskControl: "0.0009",
       operate: "Click Restore",
+      deletedAt: "2024-01-14 14:20:00",
     },
     {
       id: 32,
@@ -31,6 +44,7 @@ const RecycleBin = () => {
       minRiskControl: "0.00001",
       maxRiskControl: "0.00020",
       operate: "Click Restore",
+      deletedAt: "2024-01-14 09:15:00",
     },
     {
       id: 34,
@@ -41,6 +55,7 @@ const RecycleBin = () => {
       minRiskControl: "0.005",
       maxRiskControl: "0.015",
       operate: "Click Restore",
+      deletedAt: "2024-01-13 16:45:00",
     },
     {
       id: 36,
@@ -51,6 +66,7 @@ const RecycleBin = () => {
       minRiskControl: "0.00001",
       maxRiskControl: "0.00005",
       operate: "Click Restore",
+      deletedAt: "2024-01-13 11:30:00",
     },
     {
       id: 39,
@@ -61,6 +77,7 @@ const RecycleBin = () => {
       minRiskControl: "0.00001",
       maxRiskControl: "0.00019",
       operate: "Click Restore",
+      deletedAt: "2024-01-12 13:20:00",
     },
     {
       id: 56,
@@ -71,10 +88,35 @@ const RecycleBin = () => {
       minRiskControl: "0.001",
       maxRiskControl: "0.009",
       operate: "Click Restore",
+      deletedAt: "2024-01-12 08:45:00",
     },
-  ]);
+  ];
 
-  const [sortOrder, setSortOrder] = useState("asc");
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    setIsLoading(true);
+    const savedProducts = localStorage.getItem("recycleBinProducts");
+
+    if (savedProducts) {
+      try {
+        setProducts(JSON.parse(savedProducts));
+      } catch (error) {
+        console.error("Error loading saved products:", error);
+        setProducts(initialProducts);
+      }
+    } else {
+      setProducts(initialProducts);
+    }
+
+    setIsLoading(false);
+  }, []);
+
+  // Save to localStorage whenever products change
+  useEffect(() => {
+    if (!isLoading) {
+      localStorage.setItem("recycleBinProducts", JSON.stringify(products));
+    }
+  }, [products, isLoading]);
 
   // SVG Icons
   const EditIcon = () => (
@@ -107,6 +149,7 @@ const RecycleBin = () => {
     </svg>
   );
 
+  // Sorting functionality
   const handleSort = () => {
     const sortedProducts = [...products].sort((a, b) => {
       if (sortOrder === "asc") {
@@ -119,6 +162,20 @@ const RecycleBin = () => {
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
+  // Filter and search functionality
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.id.toString().includes(searchTerm) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      filterStatus === "All" || product.status === filterStatus;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  // Product operations
   const handleRestore = (productId) => {
     const updatedProducts = products.map((product) =>
       product.id === productId
@@ -126,12 +183,49 @@ const RecycleBin = () => {
         : product
     );
     setProducts(updatedProducts);
-    alert(`Product ${productId} restored to market opening status`);
+    setSelectedProducts(selectedProducts.filter((id) => id !== productId));
   };
 
-  const handleEdit = (productId) => {
-    console.log("Edit product:", productId);
-    alert(`Edit product: ${productId}`);
+  const handleBulkRestore = () => {
+    if (selectedProducts.length === 0) {
+      alert("Please select at least one product to restore");
+      return;
+    }
+
+    const updatedProducts = products.map((product) =>
+      selectedProducts.includes(product.id)
+        ? { ...product, status: "Market opening", operate: "Restored" }
+        : product
+    );
+    setProducts(updatedProducts);
+    setSelectedProducts([]);
+    alert(`${selectedProducts.length} products restored successfully`);
+  };
+
+  const handleEdit = (product) => {
+    setEditingProduct(product.id);
+    setEditForm({
+      productName: product.productName,
+      randomValue: product.randomValue,
+      minRiskControl: product.minRiskControl,
+      maxRiskControl: product.maxRiskControl,
+      category: product.category,
+    });
+  };
+
+  const handleSaveEdit = (productId) => {
+    const updatedProducts = products.map((product) =>
+      product.id === productId ? { ...product, ...editForm } : product
+    );
+    setProducts(updatedProducts);
+    setEditingProduct(null);
+    setEditForm({});
+    alert(`Product ${productId} updated successfully`);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProduct(null);
+    setEditForm({});
   };
 
   const handleDelete = (productId) => {
@@ -144,31 +238,110 @@ const RecycleBin = () => {
         (product) => product.id !== productId
       );
       setProducts(updatedProducts);
+      setSelectedProducts(selectedProducts.filter((id) => id !== productId));
       alert(`Product ${productId} permanently deleted`);
     }
   };
 
+  const handleBulkDelete = () => {
+    if (selectedProducts.length === 0) {
+      alert("Please select at least one product to delete");
+      return;
+    }
+
+    if (
+      window.confirm(
+        `Are you sure you want to permanently delete ${selectedProducts.length} products? This action cannot be undone.`
+      )
+    ) {
+      const updatedProducts = products.filter(
+        (product) => !selectedProducts.includes(product.id)
+      );
+      setProducts(updatedProducts);
+      setSelectedProducts([]);
+      alert(`${selectedProducts.length} products permanently deleted`);
+    }
+  };
+
   const handleEmptyRecycleBin = () => {
+    if (products.length === 0) {
+      alert("Recycle bin is already empty");
+      return;
+    }
+
     if (
       window.confirm(
         "Are you sure you want to empty the recycle bin? All items will be permanently deleted and this action cannot be undone."
       )
     ) {
       setProducts([]);
+      setSelectedProducts([]);
       alert("Recycle bin emptied successfully");
     }
   };
 
   const handleAddProduct = () => {
-    alert("Add new product functionality would open a form/modal here");
+    const newProduct = {
+      id: Math.max(...products.map((p) => p.id), 0) + 1,
+      productName: "NEW/USDT",
+      status: "Market opening",
+      category: "Foreign Exchange",
+      randomValue: "0.001",
+      minRiskControl: "0.0001",
+      maxRiskControl: "0.01",
+      operate: "Click Restore",
+      deletedAt:
+        new Date().toISOString().split("T")[0] +
+        " " +
+        new Date().toTimeString().split(" ")[0],
+    };
+
+    setProducts([newProduct, ...products]);
+    alert(`New product ${newProduct.id} added to recycle bin`);
   };
 
+  const handleSelectProduct = (productId) => {
+    setSelectedProducts((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map((product) => product.id));
+    }
+  };
+
+  // Statistics
+  const getStatistics = () => {
+    const closedProducts = products.filter((p) => p.status === "Closed").length;
+    const openProducts = products.filter(
+      (p) => p.status === "Market opening"
+    ).length;
+
+    return {
+      total: products.length,
+      closed: closedProducts,
+      open: openProducts,
+      selected: selectedProducts.length,
+    };
+  };
+
+  const stats = getStatistics();
+
+  // Enhanced styles
   const styles = {
     container: {
       padding: "20px",
       fontFamily: "Arial, sans-serif",
       maxWidth: "1400px",
       margin: "0 auto",
+      backgroundColor: "#f5f5f5",
+      minHeight: "100vh",
     },
     pageTitle: {
       fontSize: "24px",
@@ -177,6 +350,51 @@ const RecycleBin = () => {
       color: "#333",
       display: "flex",
       alignItems: "center",
+    },
+    statsContainer: {
+      display: "flex",
+      gap: "15px",
+      marginBottom: "20px",
+      flexWrap: "wrap",
+    },
+    statCard: {
+      backgroundColor: "white",
+      padding: "15px",
+      borderRadius: "8px",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      minWidth: "120px",
+      textAlign: "center",
+    },
+    statNumber: {
+      fontSize: "24px",
+      fontWeight: "bold",
+      marginBottom: "5px",
+    },
+    statLabel: {
+      fontSize: "12px",
+      color: "#666",
+      textTransform: "uppercase",
+    },
+    controlsContainer: {
+      display: "flex",
+      gap: "15px",
+      marginBottom: "20px",
+      flexWrap: "wrap",
+      alignItems: "center",
+    },
+    searchInput: {
+      padding: "8px 12px",
+      border: "1px solid #ddd",
+      borderRadius: "4px",
+      fontSize: "14px",
+      minWidth: "200px",
+    },
+    filterSelect: {
+      padding: "8px 12px",
+      border: "1px solid #ddd",
+      borderRadius: "4px",
+      fontSize: "14px",
+      backgroundColor: "white",
     },
     tableContainer: {
       background: "white",
@@ -265,6 +483,25 @@ const RecycleBin = () => {
       fontSize: "12px",
       transition: "background-color 0.2s",
     },
+    saveButton: {
+      backgroundColor: "#28a745",
+      color: "white",
+      border: "none",
+      padding: "6px 10px",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontSize: "12px",
+      marginRight: "5px",
+    },
+    cancelButton: {
+      backgroundColor: "#6c757d",
+      color: "white",
+      border: "none",
+      padding: "6px 10px",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontSize: "12px",
+    },
     addButton: {
       backgroundColor: "#007bff",
       color: "white",
@@ -274,8 +511,26 @@ const RecycleBin = () => {
       fontSize: "14px",
       cursor: "pointer",
       transition: "background-color 0.2s",
-      marginBottom: "15px",
-      marginRight: "10px",
+    },
+    bulkRestoreButton: {
+      backgroundColor: "#28a745",
+      color: "white",
+      border: "none",
+      padding: "8px 16px",
+      borderRadius: "4px",
+      fontSize: "14px",
+      cursor: "pointer",
+      transition: "background-color 0.2s",
+    },
+    bulkDeleteButton: {
+      backgroundColor: "#dc3545",
+      color: "white",
+      border: "none",
+      padding: "8px 16px",
+      borderRadius: "4px",
+      fontSize: "14px",
+      cursor: "pointer",
+      transition: "background-color 0.2s",
     },
     emptyBinButton: {
       backgroundColor: "#dc3545",
@@ -286,7 +541,6 @@ const RecycleBin = () => {
       fontSize: "14px",
       cursor: "pointer",
       transition: "background-color 0.2s",
-      marginBottom: "15px",
     },
     buttonHover: {
       backgroundColor: "#0056b3",
@@ -304,6 +558,20 @@ const RecycleBin = () => {
       display: "flex",
       gap: "10px",
       marginBottom: "15px",
+      flexWrap: "wrap",
+    },
+    editInput: {
+      padding: "4px 6px",
+      border: "1px solid #ddd",
+      borderRadius: "4px",
+      fontSize: "12px",
+      width: "80px",
+    },
+    loadingMessage: {
+      textAlign: "center",
+      padding: "40px",
+      color: "#666",
+      fontSize: "16px",
     },
   };
 
@@ -315,6 +583,14 @@ const RecycleBin = () => {
     e.target.style.backgroundColor = originalColor;
   };
 
+  if (isLoading) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.loadingMessage}>Loading recycle bin...</div>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
       <h1 style={styles.pageTitle}>
@@ -322,7 +598,48 @@ const RecycleBin = () => {
         Recycle Bin
       </h1>
 
+      {/* Statistics */}
+      <div style={styles.statsContainer}>
+        <div style={styles.statCard}>
+          <div style={styles.statNumber}>{stats.total}</div>
+          <div style={styles.statLabel}>Total Products</div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={styles.statNumber}>{stats.closed}</div>
+          <div style={styles.statLabel}>Closed</div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={styles.statNumber}>{stats.open}</div>
+          <div style={styles.statLabel}>Market Opening</div>
+        </div>
+        <div style={styles.statCard}>
+          <div style={styles.statNumber}>{stats.selected}</div>
+          <div style={styles.statLabel}>Selected</div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div style={styles.controlsContainer}>
+        <input
+          type='text'
+          placeholder='Search products...'
+          style={styles.searchInput}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <select
+          style={styles.filterSelect}
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+        >
+          <option value='All'>All Status</option>
+          <option value='Closed'>Closed</option>
+          <option value='Market opening'>Market Opening</option>
+        </select>
+      </div>
+
       <div style={styles.tableContainer}>
+        {/* Action Buttons */}
         <div style={styles.buttonContainer}>
           <button
             style={styles.addButton}
@@ -336,6 +653,30 @@ const RecycleBin = () => {
           </button>
 
           <button
+            style={styles.bulkRestoreButton}
+            onMouseOver={(e) => handleButtonHover(e, styles.restoreButtonHover)}
+            onMouseOut={(e) =>
+              handleButtonLeave(e, styles.bulkRestoreButton.backgroundColor)
+            }
+            onClick={handleBulkRestore}
+            disabled={selectedProducts.length === 0}
+          >
+            Restore Selected ({selectedProducts.length})
+          </button>
+
+          <button
+            style={styles.bulkDeleteButton}
+            onMouseOver={(e) => handleButtonHover(e, styles.deleteButtonHover)}
+            onMouseOut={(e) =>
+              handleButtonLeave(e, styles.bulkDeleteButton.backgroundColor)
+            }
+            onClick={handleBulkDelete}
+            disabled={selectedProducts.length === 0}
+          >
+            Delete Selected ({selectedProducts.length})
+          </button>
+
+          <button
             style={styles.emptyBinButton}
             onMouseOver={(e) =>
               handleButtonHover(e, styles.emptyBinButtonHover)
@@ -344,6 +685,7 @@ const RecycleBin = () => {
               handleButtonLeave(e, styles.emptyBinButton.backgroundColor)
             }
             onClick={handleEmptyRecycleBin}
+            disabled={products.length === 0}
           >
             Empty Recycle Bin
           </button>
@@ -352,6 +694,16 @@ const RecycleBin = () => {
         <table style={styles.table}>
           <thead>
             <tr>
+              <th style={styles.tableHeader}>
+                <input
+                  type='checkbox'
+                  checked={
+                    selectedProducts.length === filteredProducts.length &&
+                    filteredProducts.length > 0
+                  }
+                  onChange={handleSelectAll}
+                />
+              </th>
               <th style={styles.tableHeader}>
                 <div style={styles.sortHeader} onClick={handleSort}>
                   serial number
@@ -366,14 +718,37 @@ const RecycleBin = () => {
               <th style={styles.tableHeader}>Random Value</th>
               <th style={styles.tableHeader}>Minimum risk control value</th>
               <th style={styles.tableHeader}>Risk control maximum value</th>
+              <th style={styles.tableHeader}>Deleted At</th>
               <th style={styles.tableHeader}>operate</th>
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <tr key={product.id}>
+                <td style={styles.tableCell}>
+                  <input
+                    type='checkbox'
+                    checked={selectedProducts.includes(product.id)}
+                    onChange={() => handleSelectProduct(product.id)}
+                  />
+                </td>
                 <td style={styles.tableCell}>{product.id}</td>
-                <td style={styles.tableCell}>{product.productName}</td>
+                <td style={styles.tableCell}>
+                  {editingProduct === product.id ? (
+                    <input
+                      style={styles.editInput}
+                      value={editForm.productName}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          productName: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    product.productName
+                  )}
+                </td>
                 <td
                   style={{
                     ...styles.tableCell,
@@ -384,56 +759,139 @@ const RecycleBin = () => {
                 >
                   {product.status}
                 </td>
-                <td style={styles.tableCell}>{product.category}</td>
-                <td style={styles.tableCell}>{product.randomValue}</td>
-                <td style={styles.tableCell}>{product.minRiskControl}</td>
-                <td style={styles.tableCell}>{product.maxRiskControl}</td>
+                <td style={styles.tableCell}>
+                  {editingProduct === product.id ? (
+                    <input
+                      style={styles.editInput}
+                      value={editForm.category}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, category: e.target.value })
+                      }
+                    />
+                  ) : (
+                    product.category
+                  )}
+                </td>
+                <td style={styles.tableCell}>
+                  {editingProduct === product.id ? (
+                    <input
+                      style={styles.editInput}
+                      value={editForm.randomValue}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          randomValue: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    product.randomValue
+                  )}
+                </td>
+                <td style={styles.tableCell}>
+                  {editingProduct === product.id ? (
+                    <input
+                      style={styles.editInput}
+                      value={editForm.minRiskControl}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          minRiskControl: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    product.minRiskControl
+                  )}
+                </td>
+                <td style={styles.tableCell}>
+                  {editingProduct === product.id ? (
+                    <input
+                      style={styles.editInput}
+                      value={editForm.maxRiskControl}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          maxRiskControl: e.target.value,
+                        })
+                      }
+                    />
+                  ) : (
+                    product.maxRiskControl
+                  )}
+                </td>
+                <td style={styles.tableCell}>{product.deletedAt || "N/A"}</td>
                 <td style={styles.operateCell}>
-                  <button
-                    style={styles.editButton}
-                    onMouseOver={(e) =>
-                      handleButtonHover(e, styles.buttonHover)
-                    }
-                    onMouseOut={(e) =>
-                      handleButtonLeave(e, styles.editButton.backgroundColor)
-                    }
-                    onClick={() => handleEdit(product.id)}
-                    title='Edit'
-                  >
-                    <EditIcon />
-                  </button>
+                  {editingProduct === product.id ? (
+                    <>
+                      <button
+                        style={styles.saveButton}
+                        onClick={() => handleSaveEdit(product.id)}
+                      >
+                        Save
+                      </button>
+                      <button
+                        style={styles.cancelButton}
+                        onClick={handleCancelEdit}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        style={styles.editButton}
+                        onMouseOver={(e) =>
+                          handleButtonHover(e, styles.buttonHover)
+                        }
+                        onMouseOut={(e) =>
+                          handleButtonLeave(
+                            e,
+                            styles.editButton.backgroundColor
+                          )
+                        }
+                        onClick={() => handleEdit(product)}
+                        title='Edit'
+                      >
+                        <EditIcon />
+                      </button>
 
-                  <button
-                    style={styles.deleteButton}
-                    onMouseOver={(e) =>
-                      handleButtonHover(e, styles.deleteButtonHover)
-                    }
-                    onMouseOut={(e) =>
-                      handleButtonLeave(e, styles.deleteButton.backgroundColor)
-                    }
-                    onClick={() => handleDelete(product.id)}
-                    title='Permanently Delete'
-                  >
-                    <DeleteIcon />
-                  </button>
+                      <button
+                        style={styles.deleteButton}
+                        onMouseOver={(e) =>
+                          handleButtonHover(e, styles.deleteButtonHover)
+                        }
+                        onMouseOut={(e) =>
+                          handleButtonLeave(
+                            e,
+                            styles.deleteButton.backgroundColor
+                          )
+                        }
+                        onClick={() => handleDelete(product.id)}
+                        title='Permanently Delete'
+                      >
+                        <DeleteIcon />
+                      </button>
 
-                  {product.status === "Closed" && (
-                    <button
-                      style={styles.restoreButton}
-                      onMouseOver={(e) =>
-                        handleButtonHover(e, styles.restoreButtonHover)
-                      }
-                      onMouseOut={(e) =>
-                        handleButtonLeave(
-                          e,
-                          styles.restoreButton.backgroundColor
-                        )
-                      }
-                      onClick={() => handleRestore(product.id)}
-                      title='Restore to Active'
-                    >
-                      <RestoreIcon />
-                    </button>
+                      {product.status === "Closed" && (
+                        <button
+                          style={styles.restoreButton}
+                          onMouseOver={(e) =>
+                            handleButtonHover(e, styles.restoreButtonHover)
+                          }
+                          onMouseOut={(e) =>
+                            handleButtonLeave(
+                              e,
+                              styles.restoreButton.backgroundColor
+                            )
+                          }
+                          onClick={() => handleRestore(product.id)}
+                          title='Restore to Active'
+                        >
+                          <RestoreIcon />
+                        </button>
+                      )}
+                    </>
                   )}
                 </td>
               </tr>
@@ -441,7 +899,7 @@ const RecycleBin = () => {
           </tbody>
         </table>
 
-        {products.length === 0 && (
+        {filteredProducts.length === 0 && (
           <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
             <RecycleBinIcon />
             <h3>Recycle Bin is Empty</h3>
