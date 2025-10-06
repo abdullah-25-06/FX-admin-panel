@@ -62,7 +62,7 @@ const profitMarginEnum = {
   160: 30,
   200: 40,
   240: 50,
-  2400: 500
+  240: 50
 }
 
 export default function OpenOrder() {
