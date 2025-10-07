@@ -49,6 +49,7 @@ const ProductList = () => {
     }
 
     setIsLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save to localStorage whenever categories change
