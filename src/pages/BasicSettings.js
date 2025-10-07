@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 
 const BasicSettings = () => {
   const [settings, setSettings] = useState({
@@ -25,16 +25,16 @@ const BasicSettings = () => {
   const [activeTab, setActiveTab] = useState("website");
 
   // Enhanced validation rules
-  const validationRules = {
-    websiteName: { required: true, minLength: 2, maxLength: 50 },
-    onlineCustomerService: { required: false, type: "url" },
-    whatsappCustomerService: { required: false },
-    smsAccount: { required: true, minLength: 3 },
-    smsKey: { required: true, minLength: 10 },
-    emailAccount: { required: false, type: "email" },
-    emailPassword: { required: true, minLength: 6 },
-    emailTeamName: { required: false, maxLength: 30 },
-  };
+  // const validationRules = {
+  //   websiteName: { required: true, minLength: 2, maxLength: 50 },
+  //   onlineCustomerService: { required: false, type: "url" },
+  //   whatsappCustomerService: { required: false },
+  //   smsAccount: { required: true, minLength: 3 },
+  //   smsKey: { required: true, minLength: 10 },
+  //   emailAccount: { required: false, type: "email" },
+  //   emailPassword: { required: true, minLength: 6 },
+  //   emailTeamName: { required: false, maxLength: 30 },
+  // };
 
   // Load settings from localStorage on component mount
   useEffect(() => {

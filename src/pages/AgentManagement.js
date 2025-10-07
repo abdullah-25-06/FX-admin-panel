@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import {
   Edit,
-  UserPlus,
   Search,
-  Filter,
   Plus,
   Trash2,
   Eye,
-  MoreVertical,
   Download,
   Mail,
   Phone,
@@ -309,18 +306,18 @@ const AgentManagement = () => {
     }
   };
 
-  const handleStatusChange = (agentId, newStatus) => {
-    const updatedAgents = agents.map((agent) =>
-      agent.id === agentId ? { ...agent, status: newStatus } : agent
-    );
+  // const handleStatusChange = (agentId, newStatus) => {
+  //   const updatedAgents = agents.map((agent) =>
+  //     agent.id === agentId ? { ...agent, status: newStatus } : agent
+  //   );
 
-    setAgents(updatedAgents);
-    const agent = agents.find((a) => a.id === agentId);
-    showMessage(
-      `✅ Agent "${agent.name}" status updated to ${newStatus}`,
-      "success"
-    );
-  };
+  //   setAgents(updatedAgents);
+  //   const agent = agents.find((a) => a.id === agentId);
+  //   showMessage(
+  //     `✅ Agent "${agent.name}" status updated to ${newStatus}`,
+  //     "success"
+  //   );
+  // };
 
   const handleBulkStatusChange = (newStatus) => {
     if (selectedAgents.length === 0) {

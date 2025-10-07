@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { MessageCircle, Send } from "lucide-react";
+import { useState } from "react";
+import {  Send } from "lucide-react";
 
 const OnlineChat = () => {
   const [messages, setMessages] = useState([
