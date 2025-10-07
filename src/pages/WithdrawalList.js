@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import {
-  Bell,
   Search,
   Filter,
   Download,
   Eye,
-  MoreVertical,
-  ChevronDown,
   X,
 } from "lucide-react";
 
@@ -213,7 +210,7 @@ const WithdrawalList = () => {
 
     setWithdrawals(updatedWithdrawals);
 
-    const withdrawal = withdrawals.find((w) => w.no === withdrawalNo);
+    // const withdrawal = withdrawals.find((w) => w.no === withdrawalNo);
     const statusMessages = {
       Passed: `Withdrawal #${withdrawalNo} approved successfully`,
       Rejected: `Withdrawal #${withdrawalNo} rejected`,
@@ -255,23 +252,23 @@ const WithdrawalList = () => {
     showMessage(statusMessages[newStatus] || `Bulk status update completed`);
   };
 
-  const handleDelete = (withdrawalNo) => {
-    const withdrawal = withdrawals.find((w) => w.no === withdrawalNo);
-    if (
-      window.confirm(
-        `Are you sure you want to delete withdrawal #${withdrawalNo} for ${withdrawal.username}?`
-      )
-    ) {
-      const updatedWithdrawals = withdrawals.filter(
-        (withdrawal) => withdrawal.no !== withdrawalNo
-      );
-      setWithdrawals(updatedWithdrawals);
-      setSelectedWithdrawals(
-        selectedWithdrawals.filter((no) => no !== withdrawalNo)
-      );
-      showMessage(`Withdrawal #${withdrawalNo} deleted successfully`);
-    }
-  };
+  // const handleDelete = (withdrawalNo) => {
+  //   const withdrawal = withdrawals.find((w) => w.no === withdrawalNo);
+  //   if (
+  //     window.confirm(
+  //       `Are you sure you want to delete withdrawal #${withdrawalNo} for ${withdrawal.username}?`
+  //     )
+  //   ) {
+  //     const updatedWithdrawals = withdrawals.filter(
+  //       (withdrawal) => withdrawal.no !== withdrawalNo
+  //     );
+  //     setWithdrawals(updatedWithdrawals);
+  //     setSelectedWithdrawals(
+  //       selectedWithdrawals.filter((no) => no !== withdrawalNo)
+  //     );
+  //     showMessage(`Withdrawal #${withdrawalNo} deleted successfully`);
+  //   }
+  // };
 
   const handleBulkDelete = () => {
     if (selectedWithdrawals.length === 0) {

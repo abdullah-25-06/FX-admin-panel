@@ -41,8 +41,8 @@ import Carousel from "./pages/Carousel";
 
 // Auth Pages
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ForgotPassword from "./pages/ForgotPassword";
+// import Signup from "./pages/Signup";
+// import ForgotPassword from "./pages/ForgotPassword";
 
 import "./App.css";
 
