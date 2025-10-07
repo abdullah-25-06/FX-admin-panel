@@ -93,6 +93,7 @@ const Dashboard = () => {
       }
     };
     getAllOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [again]);
 
   const updateRealTimeData = () => {
