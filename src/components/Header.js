@@ -9,7 +9,9 @@ const Header = () => {
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
       localStorage.removeItem("isLoggedIn");
-      localStorage.removeItem("userEmail");
+      localStorage.removeItem("auth");
+      localStorage.removeItem("username")
+
       navigate("/login");
     }
   };
@@ -99,7 +101,7 @@ const Header = () => {
 
         <div style={adminDropdownStyle}>
           <div style={avatarStyle}>A</div>
-          <span>admin</span>
+          <span>{localStorage.getItem("username")}</span>
           <ChevronDown size={16} />
         </div>
 

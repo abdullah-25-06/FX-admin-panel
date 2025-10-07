@@ -48,7 +48,7 @@ import "./App.css";
 
 /* ✅ Helper ProtectedRoute component */
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem("isLoggedIn") === "true";
+  const isAuthenticated = localStorage.getItem("isLoggedIn") === "true" && localStorage.getItem("auth");
   return isAuthenticated ? children : <Navigate to='/login' replace />;
 };
 
@@ -125,8 +125,8 @@ function App() {
 
         {/* ✅ Public Routes - NO SIDEBAR */}
         <Route path='/login' element={<Login />} />
-        <Route path='/signup' element={<Signup />} />
-        <Route path='/forgot-password' element={<ForgotPassword />} />
+        {/* <Route path='/signup' element={<Signup />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} /> */}
 
         {/* ✅ Protected Routes - Only if logged in */}
         <Route

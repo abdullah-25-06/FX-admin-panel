@@ -1,4 +1,6 @@
+import axios from "axios";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -12,88 +14,14 @@ const Dashboard = () => {
     withdrawToday: 0,
     handlingFee: 0,
   });
+  const navigate = useNavigate();
 
-  const [orders, setOrders] = useState([
-    {
-      id: 1677,
-      account: "user001",
-      name: "Alex AA",
-      orderTime: "2025-09-23 14:30:25",
-      product: "BTC/USDT",
-      state: "Open Position",
-      direction: "Buy Up",
-      timePoints: "30 second",
-      openingPoint: 111154.521,
-      closingPoint: "-",
-      commission: 50.0,
-      invalidDelegation: 0,
-      validDelegation: 50.0,
-      actualProfitLoss: 200.0,
-      balanceAfter: 15000.0,
-      agent: "Agent A",
-    },
-    {
-      id: 1676,
-      account: "user002",
-      name: "Alex AA",
-      orderTime: "2025-09-23 14:25:10",
-      product: "BTC/USDT",
-      state: "Open Position",
-      direction: "Buy Up",
-      timePoints: "30 second",
-      openingPoint: 111150.123,
-      closingPoint: "-",
-      commission: 100.0,
-      invalidDelegation: 0,
-      validDelegation: 100.0,
-      actualProfitLoss: 200.0,
-      balanceAfter: 25000.0,
-      agent: "Agent B",
-    },
-    {
-      id: 1675,
-      account: "user003",
-      name: "Sarah Chen",
-      orderTime: "2025-09-23 14:20:45",
-      product: "ETH/USDT",
-      state: "Closed",
-      direction: "Sell Down",
-      timePoints: "60 second",
-      openingPoint: 3456.78,
-      closingPoint: 3460.25,
-      commission: 25.0,
-      invalidDelegation: 5.0,
-      validDelegation: 20.0,
-      actualProfitLoss: -150.0,
-      balanceAfter: 18000.0,
-      agent: "Agent A",
-    },
-    {
-      id: 1674,
-      account: "user004",
-      name: "Mike Ross",
-      orderTime: "2025-09-23 14:15:30",
-      product: "XRP/USDT",
-      state: "Pending",
-      direction: "Buy Up",
-      timePoints: "45 second",
-      openingPoint: 0.5234,
-      closingPoint: "-",
-      commission: 15.0,
-      invalidDelegation: 0,
-      validDelegation: 15.0,
-      actualProfitLoss: 0,
-      balanceAfter: 12000.0,
-      agent: "Agent C",
-    },
-  ]);
-
+  const [orders, setOrders] = useState([]);
+  const [again, setAgain] = useState(true)
   const [filteredOrders, setFilteredOrders] = useState(orders);
   const [filters, setFilters] = useState({
-    state: "all",
+    status: "all",
     direction: "all",
-    product: "all",
-    dateRange: "today",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [timeRange, setTimeRange] = useState("realtime");
@@ -110,12 +38,11 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [timeRange]);
 
-  // Filter orders based on filters and search
   useEffect(() => {
     let filtered = orders;
 
-    if (filters.state !== "all") {
-      filtered = filtered.filter((order) => order.state === filters.state);
+    if (filters.status !== "all") {
+      filtered = filtered.filter((order) => order.status === filters.status);
     }
 
     if (filters.direction !== "all") {
@@ -124,9 +51,6 @@ const Dashboard = () => {
       );
     }
 
-    if (filters.product !== "all") {
-      filtered = filtered.filter((order) => order.product === filters.product);
-    }
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -140,6 +64,37 @@ const Dashboard = () => {
     setFilteredOrders(filtered);
   }, [filters, searchTerm, orders]);
 
+  useEffect(() => {
+    const getAllOrders = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BASE_URL}/order-set/all-orders`
+          , {
+            headers: {
+              Authorization: 'Bearer ' + localStorage.getItem('auth')
+            }
+          });
+        setOrders(response.data)
+      } catch (error) {
+        setOrders([])
+        if (error.response) {
+          if (error.response.status === 401 || error.response.status === 403) {
+            localStorage.removeItem("isLoggedIn");
+            localStorage.removeItem("auth");
+            localStorage.removeItem("username")
+
+            navigate("/login");
+          } else {
+            alert("Error fetching orders:")
+          }
+        } else {
+          console.error("Network or server error:", error.message);
+        }
+      }
+    };
+    getAllOrders();
+  }, [again]);
+
   const updateRealTimeData = () => {
     setStats((prev) => ({
       ...prev,
@@ -152,9 +107,7 @@ const Dashboard = () => {
 
   const handleRefreshData = async () => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
+    setAgain(prev => !prev)
     // Update with mock data
     setStats({
       newToday: Math.floor(Math.random() * 10) + 1,
@@ -175,25 +128,29 @@ const Dashboard = () => {
     const csvContent = [
       [
         "ID",
-        "Account",
+        // "Account",
         "Name",
         "Order Time",
         "Product",
-        "State",
+        "Status",
         "Direction",
-        "Profit/Loss",
-        "Commission",
+        "Order duration",
+        "Price",
+        "Actual profit and loss",
+        "Earned Status"
       ],
       ...filteredOrders.map((order) => [
-        order.id,
-        order.account,
-        order.name,
-        order.orderTime,
-        order.product,
-        order.state,
+        order._id,
+        // order.account,
+        order.userId?.user_name,
+        order.start_time,
+        order.coin,
+        order.status,
         order.direction,
-        order.actualProfitLoss,
-        order.commission,
+        order.order_duration,
+        order.opening_price,
+        order.order_outcome_amount > 0 ? formatCurrency(order.order_outcome_amount) : formatCurrency(order.amount),
+        order.earned_status
       ]),
     ]
       .map((row) => row.join(","))
@@ -203,32 +160,40 @@ const Dashboard = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `dashboard-export-${
-      new Date().toISOString().split("T")[0]
-    }.csv`;
+    link.download = `dashboard-export-${new Date().toISOString().split("T")[0]
+      }.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
 
   const getStateColor = (state) => {
     switch (state) {
-      case "Open Position":
+      case "ON_GOING":
         return "#007bff";
-      case "Closed":
+      case "COMPLETED":
         return "#28a745";
-      case "Pending":
-        return "#ffc107";
       default:
         return "#6c757d";
     }
   };
 
-  const getProfitLossColor = (amount) => {
-    return amount >= 0 ? "#28a745" : "#dc3545";
+  const getProfitLossColor = (amount, orderAmount) => {
+    return amount > 0 ? "#28a745" : "#dc3545";
   };
 
+  const getOrderColor = (earned_status) => {
+    switch (earned_status) {
+      case "TOTAL_LOSS":
+        return "#dc3545";
+      case "TOTAL_PROFIT":
+        return "#28a745";
+      default:
+        return "#007bff";
+    }
+  }
+
   const getDirectionColor = (direction) => {
-    return direction === "Buy Up" ? "#dc3545" : "#28a745";
+    return direction === "BUY" ? "#dc3545" : "#28a745";
   };
 
   const formatCurrency = (amount) => {
@@ -524,14 +489,13 @@ const Dashboard = () => {
         }}
       >
         <select
-          value={filters.state}
-          onChange={(e) => setFilters({ ...filters, state: e.target.value })}
+          value={filters.status}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
           style={styles.filterSelect}
         >
           <option value='all'>All States</option>
-          <option value='Open Position'>Open Position</option>
-          <option value='Closed'>Closed</option>
-          <option value='Pending'>Pending</option>
+          <option value='COMPLETED'>COMPLETED</option>
+          <option value='ON_GOING'>ON_GOING</option>
         </select>
 
         <select
@@ -542,20 +506,10 @@ const Dashboard = () => {
           style={styles.filterSelect}
         >
           <option value='all'>All Directions</option>
-          <option value='Buy Up'>Buy Up</option>
-          <option value='Sell Down'>Sell Down</option>
+          <option value='BUY'>BUY</option>
+          <option value='SELL'>SELL</option>
         </select>
 
-        <select
-          value={filters.product}
-          onChange={(e) => setFilters({ ...filters, product: e.target.value })}
-          style={styles.filterSelect}
-        >
-          <option value='all'>All Products</option>
-          <option value='BTC/USDT'>BTC/USDT</option>
-          <option value='ETH/USDT'>ETH/USDT</option>
-          <option value='XRP/USDT'>XRP/USDT</option>
-        </select>
       </div>
 
       {/* Table Section */}
@@ -573,7 +527,6 @@ const Dashboard = () => {
             <thead>
               <tr>
                 <th style={styles.th}>#ID</th>
-                <th style={styles.th}>Account</th>
                 <th style={styles.th}>Name</th>
                 <th style={styles.th}>Order time</th>
                 <th style={styles.th}>Product Information</th>
@@ -582,30 +535,26 @@ const Dashboard = () => {
                 <th style={styles.th}>Time/Points</th>
                 <th style={styles.th}>Position opening point</th>
                 <th style={styles.th}>Closing point</th>
-                <th style={styles.th}>Commission amount</th>
-                <th style={styles.th}>Invalid delegation</th>
-                <th style={styles.th}>Valid delegation</th>
                 <th style={styles.th}>Actual profit and loss</th>
-                <th style={styles.th}>Balance after purchase</th>
+                <th style={styles.th}>Earned Status</th>
                 <th style={styles.th}>Owning agent</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map((order, idx) => (
-                <tr key={order.id}>
-                  <td style={styles.td}>{order.id}</td>
-                  <td style={styles.td}>{order.account}</td>
-                  <td style={styles.td}>{order.name}</td>
-                  <td style={styles.td}>{order.orderTime}</td>
-                  <td style={styles.td}>{order.product}</td>
+                <tr key={order?._id}>
+                  <td style={styles.td}>{order._id}</td>
+                  <td style={styles.td}>{order?.userId?.user_name}</td>
+                  <td style={styles.td}>{order.start_time}</td>
+                  <td style={styles.td}>{order.coin}</td>
                   <td style={styles.td}>
                     <span
                       style={{
                         ...styles.stateBadge,
-                        backgroundColor: getStateColor(order.state),
+                        backgroundColor: getStateColor(order.status),
                       }}
                     >
-                      {order.state}
+                      {order.status}
                     </span>
                   </td>
                   <td
@@ -616,28 +565,24 @@ const Dashboard = () => {
                   >
                     {order.direction}
                   </td>
-                  <td style={styles.td}>{order.timePoints}</td>
-                  <td style={styles.td}>{order.openingPoint}</td>
-                  <td style={styles.td}>{order.closingPoint}</td>
-                  <td style={{ ...styles.td, color: "#dc3545" }}>
-                    {formatCurrency(order.commission)}
-                  </td>
-                  <td style={{ ...styles.td, color: "#dc3545" }}>
-                    {formatCurrency(order.invalidDelegation)}
-                  </td>
-                  <td style={{ ...styles.td, color: "#28a745" }}>
-                    {formatCurrency(order.validDelegation)}
+                  <td style={styles.td}>{order.order_duration}</td>
+                  <td style={styles.td}>{order.opening_price}</td>
+                  <td style={styles.td}> - </td>
+                  <td
+                    style={{
+                      ...styles.td,
+                      color: getProfitLossColor(order.order_outcome_amount),
+                    }}
+                  >
+                    {order.order_outcome_amount > 0 ? formatCurrency(order.order_outcome_amount) : formatCurrency(order.amount)}
                   </td>
                   <td
                     style={{
                       ...styles.td,
-                      color: getProfitLossColor(order.actualProfitLoss),
+                      color: getOrderColor(order.earned_status),
                     }}
                   >
-                    {formatCurrency(order.actualProfitLoss)}
-                  </td>
-                  <td style={styles.td}>
-                    {formatCurrency(order.balanceAfter)}
+                    {order.earned_status}
                   </td>
                   <td style={styles.td}>{order.agent}</td>
                 </tr>
@@ -667,7 +612,9 @@ const Dashboard = () => {
               style={{
                 color: getProfitLossColor(
                   filteredOrders.reduce(
-                    (sum, order) => sum + order.actualProfitLoss,
+                    (sum, order) => {
+                      return order.earned_status === 'TOTAL_PROFIT' ? sum + order.order_outcome_amount : sum - order.amount
+                    },
                     0
                   )
                 ),
@@ -675,17 +622,11 @@ const Dashboard = () => {
             >
               {formatCurrency(
                 filteredOrders.reduce(
-                  (sum, order) => sum + order.actualProfitLoss,
+                  (sum, order) => order.earned_status === 'TOTAL_PROFIT' ? sum + order.order_outcome_amount : sum + 0,
                   0
                 )
               )}
             </span>
-          </div>
-          <div>
-            <strong>Total Commission:</strong>
-            {formatCurrency(
-              filteredOrders.reduce((sum, order) => sum + order.commission, 0)
-            )}
           </div>
         </div>
       </div>

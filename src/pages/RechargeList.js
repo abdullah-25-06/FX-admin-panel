@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
   Bell,
-  Edit2,
-  Trash2,
   Search,
-  Plus,
-  Filter,
   ArrowUpDown,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ProductList = () => {
   // State management
@@ -16,21 +13,13 @@ const ProductList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("no");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [filterCategory, setFilterCategory] = useState("All");
+  const [filterStatus] = useState("All");
+  const [filterCategory] = useState("All");
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProduct] = useState(null);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
-  // Form states
-  const [newProduct, setNewProduct] = useState({
-    productName: "",
-    category: "Foreign Exchange",
-    randomValues: "",
-    riskControlLow: "",
-    riskControlHigh: "",
-  });
 
   const [editForm, setEditForm] = useState({
     productName: "",
@@ -40,142 +29,63 @@ const ProductList = () => {
     riskControlHigh: "",
   });
 
-  // Initial data
-  const initialProducts = [
-    {
-      no: 1,
-      serial: 14,
-      productName: "BTC/USDT",
-      status: "Open market",
-      category: "Foreign Exchange",
-      randomValues: "0.008",
-      riskControlLow: "0.00001",
-      riskControlHigh: "0.010",
-      createdAt: "2024-01-15",
-    },
-    {
-      no: 2,
-      serial: 60,
-      productName: "ETH/USDT",
-      status: "Open market",
-      category: "Foreign Exchange",
-      randomValues: "0.005",
-      riskControlLow: "0.001",
-      riskControlHigh: "0.010",
-      createdAt: "2024-01-14",
-    },
-    {
-      no: 3,
-      serial: 23,
-      productName: "BNB/USDT",
-      status: "Open market",
-      category: "Foreign Exchange",
-      randomValues: "0.005",
-      riskControlLow: "0.001",
-      riskControlHigh: "0.010",
-      createdAt: "2024-01-13",
-    },
-    {
-      no: 4,
-      serial: 62,
-      productName: "XRP/USDT",
-      status: "Open market",
-      category: "Foreign Exchange",
-      randomValues: "0.0008",
-      riskControlLow: "0.00001",
-      riskControlHigh: "0.00015",
-      createdAt: "2024-01-12",
-    },
-    {
-      no: 5,
-      serial: 17,
-      productName: "LINK/USDT",
-      status: "Open market",
-      category: "Foreign Exchange",
-      randomValues: "0.00003",
-      riskControlLow: "0.00001",
-      riskControlHigh: "0.00005",
-      createdAt: "2024-01-11",
-    },
-    {
-      no: 6,
-      serial: 11,
-      productName: "BCH/USDT",
-      status: "Open market",
-      category: "Foreign Exchange",
-      randomValues: "0.008",
-      riskControlLow: "0.00001",
-      riskControlHigh: "0.00015",
-      createdAt: "2024-01-10",
-    },
-    {
-      no: 7,
-      serial: 31,
-      productName: "LTC/USDT",
-      status: "Closed",
-      category: "Cryptocurrency",
-      randomValues: "0.04",
-      riskControlLow: "0.03",
-      riskControlHigh: "0.18",
-      createdAt: "2024-01-09",
-    },
-    {
-      no: 8,
-      serial: 63,
-      productName: "BSV/USDT",
-      status: "Open market",
-      category: "Foreign Exchange",
-      randomValues: "0.0008",
-      riskControlLow: "0.00001",
-      riskControlHigh: "0.00015",
-      createdAt: "2024-01-08",
-    },
-    {
-      no: 9,
-      serial: 58,
-      productName: "ADA/USDT",
-      status: "Open market",
-      category: "Foreign Exchange",
-      randomValues: "0.0008",
-      riskControlLow: "0.00003",
-      riskControlHigh: "0.00015",
-      createdAt: "2024-01-07",
-    },
-  ];
 
-  // Load data from localStorage on component mount
   useEffect(() => {
-    setIsLoading(true);
-    const savedProducts = localStorage.getItem("productList");
-
-    if (savedProducts) {
+    const fetchWalletData = async () => {
+      setIsLoading(true);
       try {
-        setProducts(JSON.parse(savedProducts));
+        const response = await fetch(
+          `${process.env.REACT_APP_BASE_URL}/wallet/wallet-history`,
+          {
+            method: "GET",
+            headers: {
+              "Authorization": "Bearer " + localStorage.getItem("auth"),
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // ✅ Handle 401 Unauthorized
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("auth");
+          setMessage("⚠️ Session expired. Redirecting to login...");
+          setTimeout(() => navigate("/login"), 1500);
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch wallet data");
+        }
+
+        const data = await response.json();
+        const rechargeRequests = data.message.rechargeRequests.map((item, index) => ({
+          no: index + 1,
+          serial: item._id,
+          _id: item._id,
+          name: item.userId.user_name,
+          amount: item.amount,
+          payment_url: item.payment_url,
+        }));
+
+        setProducts(rechargeRequests);
       } catch (error) {
-        console.error("Error loading saved products:", error);
-        setProducts(initialProducts);
+        console.error("Error fetching wallet data:", error);
+        setMessage("❌ Failed to load wallet data");
+        setTimeout(() => setMessage(""), 3000);
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      setProducts(initialProducts);
-    }
+    };
 
-    setIsLoading(false);
-  }, []);
+    fetchWalletData();
+  }, [])
 
-  // Save to localStorage whenever products change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem("productList", JSON.stringify(products));
-    }
-  }, [products, isLoading]);
-
-  // Filter and search functionality
   const filteredProducts = products
     .filter((product) => {
       const matchesSearch =
-        product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.serial.toString().includes(searchTerm) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase());
+        product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.serial?.toString().includes(searchTerm) ||
+        product.category?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
         filterStatus === "All" || product.status === filterStatus;
@@ -210,160 +120,6 @@ const ProductList = () => {
       }
     });
 
-  // Product operations
-  const handleAddProduct = () => {
-    // Validation
-    if (
-      !newProduct.productName.trim() ||
-      !newProduct.randomValues.trim() ||
-      !newProduct.riskControlLow.trim() ||
-      !newProduct.riskControlHigh.trim()
-    ) {
-      showMessage("All fields are required", "error");
-      return;
-    }
-
-    // Check for duplicate product name
-    const duplicate = products.find(
-      (product) =>
-        product.productName.toLowerCase() ===
-        newProduct.productName.toLowerCase()
-    );
-
-    if (duplicate) {
-      showMessage("A product with this name already exists", "error");
-      return;
-    }
-
-    const newNo = Math.max(...products.map((p) => p.no), 0) + 1;
-    const newSerial = Math.max(...products.map((p) => p.serial), 0) + 1;
-
-    const productToAdd = {
-      no: newNo,
-      serial: newSerial,
-      productName: newProduct.productName,
-      status: "Open market",
-      category: newProduct.category,
-      randomValues: newProduct.randomValues,
-      riskControlLow: newProduct.riskControlLow,
-      riskControlHigh: newProduct.riskControlHigh,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-
-    setProducts([productToAdd, ...products]);
-    setNewProduct({
-      productName: "",
-      category: "Foreign Exchange",
-      randomValues: "",
-      riskControlLow: "",
-      riskControlHigh: "",
-    });
-    setShowAddForm(false);
-    showMessage(
-      `Product "${newProduct.productName}" added successfully`,
-      "success"
-    );
-  };
-
-  const handleEdit = (product) => {
-    setEditingProduct(product.no);
-    setEditForm({
-      productName: product.productName,
-      category: product.category,
-      randomValues: product.randomValues,
-      riskControlLow: product.riskControlLow,
-      riskControlHigh: product.riskControlHigh,
-    });
-  };
-
-  const handleSaveEdit = (productNo) => {
-    if (
-      !editForm.productName.trim() ||
-      !editForm.randomValues.trim() ||
-      !editForm.riskControlLow.trim() ||
-      !editForm.riskControlHigh.trim()
-    ) {
-      showMessage("All fields are required", "error");
-      return;
-    }
-
-    // Check for duplicate product name (excluding current product)
-    const duplicate = products.find(
-      (product) =>
-        product.productName.toLowerCase() ===
-          editForm.productName.toLowerCase() && product.no !== productNo
-    );
-
-    if (duplicate) {
-      showMessage("A product with this name already exists", "error");
-      return;
-    }
-
-    const updatedProducts = products.map((product) =>
-      product.no === productNo ? { ...product, ...editForm } : product
-    );
-
-    setProducts(updatedProducts);
-    setEditingProduct(null);
-    setEditForm({
-      productName: "",
-      category: "",
-      randomValues: "",
-      riskControlLow: "",
-      riskControlHigh: "",
-    });
-    showMessage(`Product updated successfully`, "success");
-  };
-
-  const handleCancelEdit = () => {
-    setEditingProduct(null);
-    setEditForm({
-      productName: "",
-      category: "",
-      randomValues: "",
-      riskControlLow: "",
-      riskControlHigh: "",
-    });
-  };
-
-  const handleToggleMarketStatus = (productNo) => {
-    const updatedProducts = products.map((product) =>
-      product.no === productNo
-        ? {
-            ...product,
-            status: product.status === "Open market" ? "Closed" : "Open market",
-          }
-        : product
-    );
-
-    setProducts(updatedProducts);
-    const product = products.find((p) => p.no === productNo);
-    showMessage(
-      `Market ${product.status === "Open market" ? "closed" : "opened"} for ${
-        product.productName
-      }`,
-      "success"
-    );
-  };
-
-  const handleDelete = (productNo) => {
-    const product = products.find((p) => p.no === productNo);
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${product.productName}"? This action cannot be undone.`
-      )
-    ) {
-      const updatedProducts = products.filter(
-        (product) => product.no !== productNo
-      );
-      setProducts(updatedProducts);
-      setSelectedProducts(selectedProducts.filter((no) => no !== productNo));
-      showMessage(
-        `Product "${product.productName}" deleted successfully`,
-        "success"
-      );
-    }
-  };
 
   const handleBulkDelete = () => {
     if (selectedProducts.length === 0) {
@@ -402,8 +158,7 @@ const ProductList = () => {
 
     setProducts(updatedProducts);
     showMessage(
-      `${selectedProducts.length} products ${
-        newStatus === "Open market" ? "opened" : "closed"
+      `${selectedProducts.length} products ${newStatus === "Open market" ? "opened" : "closed"
       }`,
       "success"
     );
@@ -418,21 +173,21 @@ const ProductList = () => {
     }
   };
 
-  const handleSelectProduct = (productNo) => {
-    setSelectedProducts((prev) =>
-      prev.includes(productNo)
-        ? prev.filter((no) => no !== productNo)
-        : [...prev, productNo]
-    );
-  };
+  // const handleSelectProduct = (productNo) => {
+  //   setSelectedProducts((prev) =>
+  //     prev.includes(productNo)
+  //       ? prev.filter((no) => no !== productNo)
+  //       : [...prev, productNo]
+  //   );
+  // };
 
-  const handleSelectAll = () => {
-    if (selectedProducts.length === filteredProducts.length) {
-      setSelectedProducts([]);
-    } else {
-      setSelectedProducts(filteredProducts.map((product) => product.no));
-    }
-  };
+  // const handleSelectAll = () => {
+  //   if (selectedProducts.length === filteredProducts.length) {
+  //     setSelectedProducts([]);
+  //   } else {
+  //     setSelectedProducts(filteredProducts.map((product) => product.no));
+  //   }
+  // };
 
   // Helper functions
   const showMessage = (text, type = "info") => {
@@ -744,9 +499,9 @@ const ProductList = () => {
         <div style={styles.statsContainer}>
           <div style={styles.statCard}>
             <div style={styles.statNumber}>{stats.totalProducts}</div>
-            <div style={styles.statLabel}>Total Products</div>
+            <div style={styles.statLabel}>Total Records</div>
           </div>
-          <div style={styles.statCard}>
+          {/* <div style={styles.statCard}>
             <div style={styles.statNumber}>{stats.openProducts}</div>
             <div style={styles.statLabel}>Open Market</div>
           </div>
@@ -761,7 +516,7 @@ const ProductList = () => {
           <div style={styles.statCard}>
             <div style={styles.statNumber}>{stats.selected}</div>
             <div style={styles.statLabel}>Selected</div>
-          </div>
+          </div> */}
         </div>
 
         {/* Message Display */}
@@ -790,149 +545,10 @@ const ProductList = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          <div style={styles.filterContainer}>
-            <select
-              style={styles.filterSelect}
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value='All'>All Status</option>
-              <option value='Open market'>Open Market</option>
-              <option value='Closed'>Closed</option>
-            </select>
-
-            <select
-              style={styles.filterSelect}
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-            >
-              <option value='All'>All Categories</option>
-              {[...new Set(products.map((p) => p.category))].map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <button style={styles.button} onClick={() => handleSort("no")}>
             <ArrowUpDown size={14} />
             Sorting
           </button>
-
-          {!showAddForm ? (
-            <button style={styles.button} onClick={() => setShowAddForm(true)}>
-              <Plus size={14} />
-              Add product
-            </button>
-          ) : (
-            <div style={styles.addForm}>
-              <h3
-                style={{
-                  marginBottom: "15px",
-                  color: "#333",
-                  fontSize: "16px",
-                }}
-              >
-                Add New Product
-              </h3>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "15px",
-                }}
-              >
-                <div style={styles.formGroup}>
-                  <label style={styles.formLabel}>Product Name</label>
-                  <input
-                    type='text'
-                    style={styles.formInput}
-                    value={newProduct.productName}
-                    onChange={(e) =>
-                      setNewProduct({
-                        ...newProduct,
-                        productName: e.target.value,
-                      })
-                    }
-                    placeholder='e.g., BTC/USDT'
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.formLabel}>Category</label>
-                  <select
-                    style={styles.formInput}
-                    value={newProduct.category}
-                    onChange={(e) =>
-                      setNewProduct({ ...newProduct, category: e.target.value })
-                    }
-                  >
-                    <option value='Foreign Exchange'>Foreign Exchange</option>
-                    <option value='Cryptocurrency'>Cryptocurrency</option>
-                    <option value='Stocks'>Stocks</option>
-                    <option value='Commodities'>Commodities</option>
-                  </select>
-                </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.formLabel}>Random Values</label>
-                  <input
-                    type='text'
-                    style={styles.formInput}
-                    value={newProduct.randomValues}
-                    onChange={(e) =>
-                      setNewProduct({
-                        ...newProduct,
-                        randomValues: e.target.value,
-                      })
-                    }
-                    placeholder='e.g., 0.008'
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.formLabel}>Risk Control Low</label>
-                  <input
-                    type='text'
-                    style={styles.formInput}
-                    value={newProduct.riskControlLow}
-                    onChange={(e) =>
-                      setNewProduct({
-                        ...newProduct,
-                        riskControlLow: e.target.value,
-                      })
-                    }
-                    placeholder='e.g., 0.00001'
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label style={styles.formLabel}>Risk Control High</label>
-                  <input
-                    type='text'
-                    style={styles.formInput}
-                    value={newProduct.riskControlHigh}
-                    onChange={(e) =>
-                      setNewProduct({
-                        ...newProduct,
-                        riskControlHigh: e.target.value,
-                      })
-                    }
-                    placeholder='e.g., 0.010'
-                  />
-                </div>
-              </div>
-              <div style={styles.formButtons}>
-                <button style={styles.buttonSuccess} onClick={handleAddProduct}>
-                  Add Product
-                </button>
-                <button
-                  style={styles.buttonSecondary}
-                  onClick={() => setShowAddForm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
 
           {selectedProducts.length > 0 && (
             <>
@@ -961,16 +577,6 @@ const ProductList = () => {
             <table style={styles.table}>
               <thead>
                 <tr style={styles.tableHeader}>
-                  <th style={styles.tableHeaderCell}>
-                    <input
-                      type='checkbox'
-                      checked={
-                        selectedProducts.length === filteredProducts.length &&
-                        filteredProducts.length > 0
-                      }
-                      onChange={handleSelectAll}
-                    />
-                  </th>
                   <th
                     style={styles.tableHeaderCell}
                     onClick={() => handleSort("no")}
@@ -992,65 +598,25 @@ const ProductList = () => {
                   </th>
                   <th
                     style={styles.tableHeaderCell}
-                    onClick={() => handleSort("productName")}
                   >
                     <div style={styles.sortHeader}>
-                      Product Name{" "}
-                      {sortField === "productName" &&
-                        (sortOrder === "asc" ? "↑" : "↓")}
+                      User Name{" "}
                     </div>
                   </th>
                   <th
                     style={styles.tableHeaderCell}
-                    onClick={() => handleSort("status")}
                   >
                     <div style={styles.sortHeader}>
-                      Status{" "}
-                      {sortField === "status" &&
-                        (sortOrder === "asc" ? "↑" : "↓")}
+                      Amount{" "}
                     </div>
                   </th>
                   <th
                     style={styles.tableHeaderCell}
-                    onClick={() => handleSort("category")}
                   >
                     <div style={styles.sortHeader}>
-                      Category{" "}
-                      {sortField === "category" &&
-                        (sortOrder === "asc" ? "↑" : "↓")}
+                      Payment Url{" "}
                     </div>
                   </th>
-                  <th
-                    style={styles.tableHeaderCell}
-                    onClick={() => handleSort("randomValues")}
-                  >
-                    <div style={styles.sortHeader}>
-                      Random Values{" "}
-                      {sortField === "randomValues" &&
-                        (sortOrder === "asc" ? "↑" : "↓")}
-                    </div>
-                  </th>
-                  <th
-                    style={styles.tableHeaderCell}
-                    onClick={() => handleSort("riskControlLow")}
-                  >
-                    <div style={styles.sortHeader}>
-                      Risk control low{" "}
-                      {sortField === "riskControlLow" &&
-                        (sortOrder === "asc" ? "↑" : "↓")}
-                    </div>
-                  </th>
-                  <th
-                    style={styles.tableHeaderCell}
-                    onClick={() => handleSort("riskControlHigh")}
-                  >
-                    <div style={styles.sortHeader}>
-                      Risk control high{" "}
-                      {sortField === "riskControlHigh" &&
-                        (sortOrder === "asc" ? "↑" : "↓")}
-                    </div>
-                  </th>
-                  <th style={styles.tableHeaderCell}>Operate</th>
                 </tr>
               </thead>
 
@@ -1060,13 +626,6 @@ const ProductList = () => {
                     key={item.no}
                     style={{ borderBottom: "1px solid #f0f0f0" }}
                   >
-                    <td style={styles.tableCell}>
-                      <input
-                        type='checkbox'
-                        checked={selectedProducts.includes(item.no)}
-                        onChange={() => handleSelectProduct(item.no)}
-                      />
-                    </td>
                     <td style={styles.tableCell}>{item.no}</td>
                     <td style={styles.tableCell}>{item.serial}</td>
                     <td
@@ -1089,7 +648,7 @@ const ProductList = () => {
                           }
                         />
                       ) : (
-                        item.productName
+                        item.name
                       )}
                     </td>
                     <td
@@ -1100,151 +659,15 @@ const ProductList = () => {
                           : styles.statusClosed),
                       }}
                     >
-                      {item.status}
+                      {item.amount}
                     </td>
                     <td style={styles.tableCell}>
-                      {editingProduct === item.no ? (
-                        <select
-                          style={styles.formInput}
-                          value={editForm.category}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              category: e.target.value,
-                            })
-                          }
-                        >
-                          <option value='Foreign Exchange'>
-                            Foreign Exchange
-                          </option>
-                          <option value='Cryptocurrency'>Cryptocurrency</option>
-                          <option value='Stocks'>Stocks</option>
-                          <option value='Commodities'>Commodities</option>
-                        </select>
-                      ) : (
-                        item.category
-                      )}
+                      <a href={item.payment_url} target="_blank" rel="noopener noreferrer">
+                        Image Link
+                      </a>
                     </td>
-                    <td style={styles.tableCell}>
-                      {editingProduct === item.no ? (
-                        <input
-                          type='text'
-                          style={styles.formInput}
-                          value={editForm.randomValues}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              randomValues: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        item.randomValues
-                      )}
-                    </td>
-                    <td style={styles.tableCell}>
-                      {editingProduct === item.no ? (
-                        <input
-                          type='text'
-                          style={styles.formInput}
-                          value={editForm.riskControlLow}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              riskControlLow: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        item.riskControlLow
-                      )}
-                    </td>
-                    <td style={styles.tableCell}>
-                      {editingProduct === item.no ? (
-                        <input
-                          type='text'
-                          style={styles.formInput}
-                          value={editForm.riskControlHigh}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              riskControlHigh: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        item.riskControlHigh
-                      )}
-                    </td>
-                    <td style={styles.operateCell}>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {editingProduct === item.no ? (
-                          <>
-                            <button
-                              style={{
-                                ...styles.buttonSmall,
-                                backgroundColor: "#27ae60",
-                                color: "white",
-                              }}
-                              onClick={() => handleSaveEdit(item.no)}
-                            >
-                              Save
-                            </button>
-                            <button
-                              style={{
-                                ...styles.buttonSmall,
-                                backgroundColor: "#95a5a6",
-                                color: "white",
-                              }}
-                              onClick={handleCancelEdit}
-                            >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              style={{
-                                ...styles.buttonSmall,
-                                backgroundColor: "#e74c3c",
-                                color: "white",
-                              }}
-                              onClick={() => handleToggleMarketStatus(item.no)}
-                            >
-                              {item.status === "Open market"
-                                ? "Close market"
-                                : "Open market"}
-                            </button>
-                            <button
-                              style={{
-                                ...styles.buttonSmall,
-                                backgroundColor: "#3498db",
-                                color: "white",
-                              }}
-                              onClick={() => handleEdit(item)}
-                            >
-                              <Edit2 size={12} />
-                            </button>
-                            <button
-                              style={{
-                                ...styles.buttonSmall,
-                                backgroundColor: "#e74c3c",
-                                color: "white",
-                              }}
-                              onClick={() => handleDelete(item.no)}
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+
+
                   </tr>
                 ))}
               </tbody>

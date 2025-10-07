@@ -8,6 +8,8 @@ import {
   History,
   Download,
 } from "lucide-react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ManualDW = () => {
   const [formData, setFormData] = useState({
@@ -15,119 +17,90 @@ const ManualDW = () => {
     display: "",
     amount: "",
     remark: "",
-    transactionType: "deposit", // deposit or withdraw
+    transactionType: "deposit",
     accountId: null,
     accountBalance: null,
   });
+  const navigate = useNavigate();
 
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // success, error, warning
+  const [messageType, setMessageType] = useState("");
   const [transactions, setTransactions] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showAccountSearch, setShowAccountSearch] = useState(false);
   const [showTransactionHistory, setShowTransactionHistory] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingUsers, setIsFetchingUsers] = useState(false);
 
-  // Sample accounts data
-  const sampleAccounts = [
-    {
-      id: 1,
-      username: "john_doe",
-      uid: "1058801",
-      balance: 1500.0,
-      status: "Active",
-    },
-    {
-      id: 2,
-      username: "alice_smith",
-      uid: "1058802",
-      balance: 3200.5,
-      status: "Active",
-    },
-    {
-      id: 3,
-      username: "bob_wilson",
-      uid: "1058803",
-      balance: 875.25,
-      status: "Active",
-    },
-    {
-      id: 4,
-      username: "sara_jones",
-      uid: "1058804",
-      balance: 0.0,
-      status: "Inactive",
-    },
-    {
-      id: 5,
-      username: "mike_brown",
-      uid: "1058805",
-      balance: 5420.75,
-      status: "Active",
-    },
-    {
-      id: 6,
-      username: "emma_davis",
-      uid: "1058806",
-      balance: 123.45,
-      status: "Active",
-    },
-  ];
+  // Fetch users from API
+  const fetchUsers = async () => {
+    setIsFetchingUsers(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BASE_URL}/user/all-users`, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + localStorage.getItem('auth'),
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.status === 401 || response.status === 403 ) {
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("auth");
+        localStorage.removeItem("username")
 
-  // Load data from localStorage on component mount
+        navigate("/login");
+      } else {
+        console.error("Network or server error:");
+      }
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const data = await response.json();
+      const transformedAccounts = data.users.map((user) => ({
+        id: user._id,
+        username: user.user_name,
+        email: user.email,
+        uid: user._id,
+        balance: 0, // Default balance - you can fetch from wallet API if needed
+        status: user.is_verified ? "Active" : "Inactive",
+      }));
+
+      setAccounts(transformedAccounts);
+      showMessage(`✅ Loaded ${data.total} users successfully`, "success");
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      showMessage("❌ Failed to load users from server", "error");
+
+      // Fallback to sample data
+      setAccounts([
+        {
+          id: 1,
+          username: "john_doe",
+          uid: "1058801",
+          balance: 1500.0,
+          status: "Active",
+        },
+      ]);
+    } finally {
+      setIsFetchingUsers(false);
+    }
+  };
+
+  // Load data on component mount
   useEffect(() => {
     setIsLoading(true);
 
-    // Load transactions
-    const savedTransactions = localStorage.getItem("manualDWTransactions");
-    if (savedTransactions) {
-      try {
-        const parsedTransactions = JSON.parse(savedTransactions);
-        setTransactions(
-          Array.isArray(parsedTransactions) ? parsedTransactions : []
-        );
-      } catch (error) {
-        console.error("Error loading transactions:", error);
-        setTransactions([]);
-      }
-    }
+    // Load transactions from memory
+    const savedTransactions = [];
+    setTransactions(savedTransactions);
 
-    // Load accounts
-    const savedAccounts = localStorage.getItem("manualDWAccounts");
-    if (savedAccounts) {
-      try {
-        const parsedAccounts = JSON.parse(savedAccounts);
-        setAccounts(
-          Array.isArray(parsedAccounts) ? parsedAccounts : sampleAccounts
-        );
-      } catch (error) {
-        console.error("Error loading accounts:", error);
-        setAccounts(sampleAccounts);
-      }
-    } else {
-      setAccounts(sampleAccounts);
-    }
+    // Fetch users from API
+    fetchUsers();
 
     setIsLoading(false);
   }, []);
-
-  // Save transactions to localStorage whenever they change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem(
-        "manualDWTransactions",
-        JSON.stringify(transactions)
-      );
-    }
-  }, [transactions, isLoading]);
-
-  // Save accounts to localStorage whenever they change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem("manualDWAccounts", JSON.stringify(accounts));
-    }
-  }, [accounts, isLoading]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -144,6 +117,7 @@ const ManualDW = () => {
       });
     }
     setShowAccountSearch(false);
+    setSearchTerm("");
   };
 
   const handleTransactionTypeChange = (type) => {
@@ -162,14 +136,8 @@ const ManualDW = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.account || !formData.accountId) {
       showMessage("⚠️ Please select an account", "error");
-      return;
-    }
-
-    if (!formData.display) {
-      showMessage("⚠️ Please select display option", "error");
       return;
     }
 
@@ -184,25 +152,18 @@ const ManualDW = () => {
     }
 
     const amount = parseFloat(formData.amount);
-    const selectedAccount = accounts.find(
-      (acc) => acc.id === formData.accountId
-    );
+    const selectedAccount = accounts.find((acc) => acc.id === formData.accountId);
 
     if (!selectedAccount || selectedAccount.balance === undefined) {
       showMessage("❌ Selected account not found or invalid balance", "error");
       return;
     }
 
-    // Check for sufficient balance for withdrawals
-    if (
-      formData.transactionType === "withdraw" &&
-      amount > selectedAccount.balance
-    ) {
+    if (formData.transactionType === "withdraw" && amount > selectedAccount.balance) {
       showMessage("❌ Insufficient balance for withdrawal", "error");
       return;
     }
 
-    // Check for negative amount
     if (amount < 0) {
       showMessage("❌ Please enter a positive amount", "error");
       return;
@@ -211,15 +172,35 @@ const ManualDW = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/wallet/add-to-wallet`,
+        {
+          amountToAdd: amount,
+          userId: formData.accountId,
+          remarks: {
+            comment: formData.remark,
+            amount,
+          },
+        },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("auth"),
+          },
+        }
+      );
 
-      // Create transaction record
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("auth");
+        showMessage("⚠️ Session expired. Redirecting to login...", "warning");
+        setTimeout(() => navigate("/login"), 1500);
+        return;
+      }
+
       const transaction = {
         id: Date.now(),
         accountId: formData.accountId,
         username: formData.account,
-        amount: amount,
+        amount,
         type: formData.transactionType,
         display: formData.display,
         remark: formData.remark,
@@ -232,24 +213,21 @@ const ManualDW = () => {
             : (selectedAccount.balance || 0) - amount,
       };
 
-      // Update account balance
       const updatedAccounts = accounts.map((account) =>
         account.id === formData.accountId
           ? {
-              ...account,
-              balance:
-                formData.transactionType === "deposit"
-                  ? (account.balance || 0) + amount
-                  : (account.balance || 0) - amount,
-            }
+            ...account,
+            balance:
+              formData.transactionType === "deposit"
+                ? (account.balance || 0) + amount
+                : (account.balance || 0) - amount,
+          }
           : account
       );
 
-      // Update state
       setAccounts(updatedAccounts);
       setTransactions([transaction, ...transactions]);
 
-      // Reset form
       setFormData({
         account: "",
         display: "",
@@ -261,15 +239,20 @@ const ManualDW = () => {
       });
 
       showMessage(
-        `✅ ${
-          formData.transactionType === "deposit" ? "Deposit" : "Withdrawal"
-        } of $${amount.toFixed(2)} completed successfully for ${
-          formData.account
-        }`,
+        `✅ ${formData.transactionType === "deposit" ? "Deposit" : "Withdrawal"} of $${amount.toFixed(
+          2
+        )} completed successfully for ${formData.account}`,
         "success"
       );
     } catch (error) {
-      showMessage("❌ Transaction failed. Please try again.", "error");
+      if (error.response && error.response.status === 401 || error.response.status === 403 ) {
+        localStorage.removeItem("auth");
+        showMessage("⚠️ Session expired. Redirecting to login...", "warning");
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        console.error("Transaction error:", error);
+        showMessage("❌ Transaction failed. Please try again.", "error");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -304,9 +287,8 @@ const ManualDW = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `manual-transactions-${
-      new Date().toISOString().split("T")[0]
-    }.csv`;
+    a.download = `manual-transactions-${new Date().toISOString().split("T")[0]
+      }.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -318,6 +300,7 @@ const ManualDW = () => {
   const filteredAccounts = accounts.filter(
     (account) =>
       account.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      account.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       account.uid.includes(searchTerm)
   );
 
@@ -370,7 +353,6 @@ const ManualDW = () => {
     return type === "deposit" ? <Plus size={14} /> : <Minus size={14} />;
   };
 
-  // Statistics
   const getStatistics = () => {
     const totalDeposits = transactions
       .filter((t) => t.type === "deposit")
@@ -392,7 +374,6 @@ const ManualDW = () => {
 
   const stats = getStatistics();
 
-  // Close account search when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -513,6 +494,27 @@ const ManualDW = () => {
 
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <button
+              onClick={fetchUsers}
+              disabled={isFetchingUsers}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: isFetchingUsers ? "#95a5a6" : "#9b59b6",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: isFetchingUsers ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <User size={16} />
+              {isFetchingUsers ? "Loading..." : "Refresh Users"}
+            </button>
+
+            <button
               onClick={() => setShowTransactionHistory(!showTransactionHistory)}
               style={{
                 padding: "8px 16px",
@@ -576,6 +578,25 @@ const ManualDW = () => {
             <div
               style={{ fontSize: "12px", color: "#666", marginBottom: "5px" }}
             >
+              Total Users
+            </div>
+            <div
+              style={{ fontSize: "24px", fontWeight: "bold", color: "#9b59b6" }}
+            >
+              {accounts.length}
+            </div>
+          </div>
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "15px",
+              borderRadius: "6px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            }}
+          >
+            <div
+              style={{ fontSize: "12px", color: "#666", marginBottom: "5px" }}
+            >
               Total Transactions
             </div>
             <div
@@ -620,29 +641,6 @@ const ManualDW = () => {
               style={{ fontSize: "24px", fontWeight: "bold", color: "#e74c3c" }}
             >
               ${stats.totalWithdrawals.toFixed(2)}
-            </div>
-          </div>
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "15px",
-              borderRadius: "6px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            }}
-          >
-            <div
-              style={{ fontSize: "12px", color: "#666", marginBottom: "5px" }}
-            >
-              Net Flow
-            </div>
-            <div
-              style={{
-                fontSize: "24px",
-                fontWeight: "bold",
-                color: stats.netFlow >= 0 ? "#27ae60" : "#e74c3c",
-              }}
-            >
-              ${stats.netFlow.toFixed(2)}
             </div>
           </div>
         </div>
@@ -752,7 +750,7 @@ const ManualDW = () => {
                   fontSize: "14px",
                 }}
               >
-                Account
+                Account {isFetchingUsers && <span style={{ color: "#666", fontSize: "12px" }}>(Loading users...)</span>}
               </label>
               <div style={{ position: "relative" }}>
                 <input
@@ -764,6 +762,7 @@ const ManualDW = () => {
                   }
                   onFocus={() => setShowAccountSearch(true)}
                   placeholder='Search and select account'
+                  disabled={isFetchingUsers}
                   style={{
                     width: "100%",
                     padding: "10px 12px",
@@ -771,11 +770,14 @@ const ManualDW = () => {
                     borderRadius: "4px",
                     fontSize: "14px",
                     outline: "none",
+                    backgroundColor: isFetchingUsers ? "#f5f5f5" : "white",
+                    cursor: isFetchingUsers ? "not-allowed" : "text",
                   }}
                 />
                 <button
                   type='button'
                   onClick={() => setShowAccountSearch(!showAccountSearch)}
+                  disabled={isFetchingUsers}
                   style={{
                     position: "absolute",
                     right: "8px",
@@ -783,14 +785,14 @@ const ManualDW = () => {
                     transform: "translateY(-50%)",
                     background: "none",
                     border: "none",
-                    cursor: "pointer",
+                    cursor: isFetchingUsers ? "not-allowed" : "pointer",
                     color: "#666",
                   }}
                 >
                   <Search size={16} />
                 </button>
 
-                {showAccountSearch && (
+                {showAccountSearch && !isFetchingUsers && (
                   <div
                     style={{
                       position: "absolute",
@@ -802,8 +804,9 @@ const ManualDW = () => {
                       borderRadius: "4px",
                       boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                       zIndex: 1000,
-                      maxHeight: "200px",
+                      maxHeight: "250px",
                       overflowY: "auto",
+                      marginTop: "4px",
                     }}
                   >
                     <div
@@ -811,7 +814,7 @@ const ManualDW = () => {
                     >
                       <input
                         type='text'
-                        placeholder='Search accounts...'
+                        placeholder='Search by name, email or UID...'
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{
@@ -829,7 +832,7 @@ const ManualDW = () => {
                         key={account.id}
                         onClick={() => handleAccountSelect(account)}
                         style={{
-                          padding: "10px 12px",
+                          padding: "12px",
                           cursor: "pointer",
                           borderBottom: "1px solid #f5f5f5",
                           display: "flex",
@@ -838,20 +841,23 @@ const ManualDW = () => {
                           backgroundColor: "white",
                         }}
                         onMouseEnter={(e) =>
-                          (e.target.style.backgroundColor = "#f8f9fa")
+                          (e.currentTarget.style.backgroundColor = "#f8f9fa")
                         }
                         onMouseLeave={(e) =>
-                          (e.target.style.backgroundColor = "white")
+                          (e.currentTarget.style.backgroundColor = "white")
                         }
                       >
                         <User size={16} color='#666' />
-                        <div>
-                          <div style={{ fontWeight: "500" }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: "500", marginBottom: "2px" }}>
                             {account.username}
                           </div>
                           <div style={{ fontSize: "12px", color: "#666" }}>
+                            {account.email}
+                          </div>
+                          <div style={{ fontSize: "11px", color: "#999", marginTop: "2px" }}>
                             UID: {account.uid} | Balance: $
-                            {(account.balance || 0).toFixed(2)}
+                            {(account.balance || 0).toFixed(2)} | {account.status}
                           </div>
                         </div>
                       </div>
@@ -870,39 +876,6 @@ const ManualDW = () => {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Display Option */}
-            <div style={{ marginBottom: "20px" }}>
-              <label
-                style={{
-                  display: "block",
-                  fontWeight: "500",
-                  marginBottom: "8px",
-                  color: "#333",
-                  fontSize: "14px",
-                }}
-              >
-                Whether it is shown
-              </label>
-              <select
-                name='display'
-                value={formData.display}
-                onChange={handleChange}
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  outline: "none",
-                  backgroundColor: "white",
-                }}
-              >
-                <option value=''>-- Select --</option>
-                <option value='display'>Display to User</option>
-                <option value='hide'>Hide from User</option>
-              </select>
             </div>
 
             {/* Operation Amount */}
@@ -995,11 +968,10 @@ const ManualDW = () => {
             >
               {isLoading
                 ? "Processing..."
-                : `Submit ${
-                    formData.transactionType === "deposit"
-                      ? "Deposit"
-                      : "Withdrawal"
-                  }`}
+                : `Submit ${formData.transactionType === "deposit"
+                  ? "Deposit"
+                  : "Withdrawal"
+                }`}
             </button>
           </form>
 
