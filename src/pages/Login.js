@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
@@ -116,18 +116,18 @@ const Login = () => {
     marginTop: "5px",
   };
 
-  const footerTextStyle = {
-    textAlign: "center",
-    marginTop: "15px",
-    fontSize: "14px",
-  };
+  // const footerTextStyle = {
+  //   textAlign: "center",
+  //   marginTop: "15px",
+  //   fontSize: "14px",
+  // };
 
-  const linkStyle = {
-    color: "#1d7ef3",
-    textDecoration: "none",
-    marginLeft: "5px",
-    cursor: "pointer",
-  };
+  // const linkStyle = {
+  //   color: "#1d7ef3",
+  //   textDecoration: "none",
+  //   marginLeft: "5px",
+  //   cursor: "pointer",
+  // };
 
   return (
     <div style={containerStyle}>

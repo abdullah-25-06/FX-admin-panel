@@ -1,6 +1,6 @@
 import axios from "axios";
-import { Wallet } from "lucide-react";
-import React, { useState, useEffect } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const MemberWallet = () => {
@@ -11,86 +11,86 @@ const MemberWallet = () => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [sortField, setSortField] = useState("serialNumber");
   const [selectedAccounts, setSelectedAccounts] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newAccount, setNewAccount] = useState({ uid: "", walletAddress: "" });
-  const [editingAccount, setEditingAccount] = useState(null);
+  // const [showAddForm, setShowAddForm] = useState(false);
+  // const [newAccount, setNewAccount] = useState({ uid: "", walletAddress: "" });
+  const [editingAccount] = useState(null);
   const [editForm, setEditForm] = useState({ uid: "", walletAddress: "" });
   const [message, setMessage] = useState("");
   const [again, setAgain] = useState(true)
   const navigate = useNavigate()
   // Initial data
-  const initialAccounts = [
-    {
-      serialNumber: 25,
-      uid: 1058819,
-      walletAddress: "Trcejdvsbskkdjhjdda3uhsgwb",
-      createdAt: "2024-01-15",
-      status: "Active",
-    },
-    {
-      serialNumber: 24,
-      uid: 1058817,
-      walletAddress: "Trcejdvsbskkdjhjdda3uhsgwb",
-      createdAt: "2024-01-14",
-      status: "Active",
-    },
-    {
-      serialNumber: 23,
-      uid: 1058810,
-      walletAddress: "Dhanera",
-      createdAt: "2024-01-13",
-      status: "Active",
-    },
-    {
-      serialNumber: 22,
-      uid: 1058808,
-      walletAddress: "Husenchhai",
-      createdAt: "2024-01-12",
-      status: "Inactive",
-    },
-    {
-      serialNumber: 21,
-      uid: 1058801,
-      walletAddress: "67478",
-      createdAt: "2024-01-11",
-      status: "Active",
-    },
-    {
-      serialNumber: 20,
-      uid: 1058800,
-      walletAddress: "AshokS492",
-      createdAt: "2024-01-10",
-      status: "Active",
-    },
-    {
-      serialNumber: 19,
-      uid: 1058792,
-      walletAddress: "TNmpnecog7YtKQouqmUdi3PwrPddSeJ",
-      createdAt: "2024-01-09",
-      status: "Active",
-    },
-    {
-      serialNumber: 18,
-      uid: 1058788,
-      walletAddress: "isohagiodhgotidwhgoldf",
-      createdAt: "2024-01-08",
-      status: "Inactive",
-    },
-    {
-      serialNumber: 17,
-      uid: 1058784,
-      walletAddress: "0x434971859d64BccTaFd92F-40469F2305A997aac6",
-      createdAt: "2024-01-07",
-      status: "Active",
-    },
-    {
-      serialNumber: 16,
-      uid: 1058770,
-      walletAddress: "Jdigldhsbduduudhdhdhqeg",
-      createdAt: "2024-01-06",
-      status: "Active",
-    },
-  ];
+  // const initialAccounts = [
+  //   {
+  //     serialNumber: 25,
+  //     uid: 1058819,
+  //     walletAddress: "Trcejdvsbskkdjhjdda3uhsgwb",
+  //     createdAt: "2024-01-15",
+  //     status: "Active",
+  //   },
+  //   {
+  //     serialNumber: 24,
+  //     uid: 1058817,
+  //     walletAddress: "Trcejdvsbskkdjhjdda3uhsgwb",
+  //     createdAt: "2024-01-14",
+  //     status: "Active",
+  //   },
+  //   {
+  //     serialNumber: 23,
+  //     uid: 1058810,
+  //     walletAddress: "Dhanera",
+  //     createdAt: "2024-01-13",
+  //     status: "Active",
+  //   },
+  //   {
+  //     serialNumber: 22,
+  //     uid: 1058808,
+  //     walletAddress: "Husenchhai",
+  //     createdAt: "2024-01-12",
+  //     status: "Inactive",
+  //   },
+  //   {
+  //     serialNumber: 21,
+  //     uid: 1058801,
+  //     walletAddress: "67478",
+  //     createdAt: "2024-01-11",
+  //     status: "Active",
+  //   },
+  //   {
+  //     serialNumber: 20,
+  //     uid: 1058800,
+  //     walletAddress: "AshokS492",
+  //     createdAt: "2024-01-10",
+  //     status: "Active",
+  //   },
+  //   {
+  //     serialNumber: 19,
+  //     uid: 1058792,
+  //     walletAddress: "TNmpnecog7YtKQouqmUdi3PwrPddSeJ",
+  //     createdAt: "2024-01-09",
+  //     status: "Active",
+  //   },
+  //   {
+  //     serialNumber: 18,
+  //     uid: 1058788,
+  //     walletAddress: "isohagiodhgotidwhgoldf",
+  //     createdAt: "2024-01-08",
+  //     status: "Inactive",
+  //   },
+  //   {
+  //     serialNumber: 17,
+  //     uid: 1058784,
+  //     walletAddress: "0x434971859d64BccTaFd92F-40469F2305A997aac6",
+  //     createdAt: "2024-01-07",
+  //     status: "Active",
+  //   },
+  //   {
+  //     serialNumber: 16,
+  //     uid: 1058770,
+  //     walletAddress: "Jdigldhsbduduudhdhdhqeg",
+  //     createdAt: "2024-01-06",
+  //     status: "Active",
+  //   },
+  // ];
 
   useEffect(() => {
     const fetchWalletData = async () => {
@@ -135,7 +135,7 @@ const MemberWallet = () => {
         setAccounts(walletAccounts);
       } catch (error) {
         // ✅ Handle 401 in error response too (e.g. network or CORS case)
-        if (error.response && error.response.status === 401 || error.response.status === 403) {
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           localStorage.removeItem("auth");
           setMessage("⚠️ Session expired. Redirecting to login...");
           setTimeout(() => navigate("/login"), 1500);
@@ -182,44 +182,44 @@ const MemberWallet = () => {
     });
 
   // Account operations
-  const handleDelete = (serialNumber) => {
-    const account = accounts.find((acc) => acc.serialNumber === serialNumber);
-    if (
-      window.confirm(
-        `Are you sure you want to delete wallet account #${serialNumber} (UID: ${account.uid})?`
-      )
-    ) {
-      const updatedAccounts = accounts.filter(
-        (account) => account.serialNumber !== serialNumber
-      );
-      setAccounts(updatedAccounts);
-      setSelectedAccounts(selectedAccounts.filter((id) => id !== serialNumber));
-      setMessage(`Account #${serialNumber} deleted successfully`);
-      setTimeout(() => setMessage(""), 3000);
-    }
-  };
+  // const handleDelete = (serialNumber) => {
+  //   const account = accounts.find((acc) => acc.serialNumber === serialNumber);
+  //   if (
+  //     window.confirm(
+  //       `Are you sure you want to delete wallet account #${serialNumber} (UID: ${account.uid})?`
+  //     )
+  //   ) {
+  //     const updatedAccounts = accounts.filter(
+  //       (account) => account.serialNumber !== serialNumber
+  //     );
+  //     setAccounts(updatedAccounts);
+  //     setSelectedAccounts(selectedAccounts.filter((id) => id !== serialNumber));
+  //     setMessage(`Account #${serialNumber} deleted successfully`);
+  //     setTimeout(() => setMessage(""), 3000);
+  //   }
+  // };
 
-  const handleBulkDelete = () => {
-    if (selectedAccounts.length === 0) {
-      setMessage("Please select at least one account to delete");
-      setTimeout(() => setMessage(""), 3000);
-      return;
-    }
+  // const handleBulkDelete = () => {
+  //   if (selectedAccounts.length === 0) {
+  //     setMessage("Please select at least one account to delete");
+  //     setTimeout(() => setMessage(""), 3000);
+  //     return;
+  //   }
 
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedAccounts.length} selected accounts?`
-      )
-    ) {
-      const updatedAccounts = accounts.filter(
-        (account) => !selectedAccounts.includes(account.serialNumber)
-      );
-      setAccounts(updatedAccounts);
-      setSelectedAccounts([]);
-      setMessage(`${selectedAccounts.length} accounts deleted successfully`);
-      setTimeout(() => setMessage(""), 3000);
-    }
-  };
+  //   if (
+  //     window.confirm(
+  //       `Are you sure you want to delete ${selectedAccounts.length} selected accounts?`
+  //     )
+  //   ) {
+  //     const updatedAccounts = accounts.filter(
+  //       (account) => !selectedAccounts.includes(account.serialNumber)
+  //     );
+  //     setAccounts(updatedAccounts);
+  //     setSelectedAccounts([]);
+  //     setMessage(`${selectedAccounts.length} accounts deleted successfully`);
+  //     setTimeout(() => setMessage(""), 3000);
+  //   }
+  // };
 
   // const handleAddAccount = () => {
   //   // Validation
@@ -283,7 +283,7 @@ const MemberWallet = () => {
       alert(`✅ Wallet status updated to "${status}" for ${account.username}`);
     } catch (error) {
       // ✅ Handle 401 in error response too
-      if (error.response && error.response.status === 401 || error.response.status === 403) {
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
         localStorage.removeItem("auth");
         alert("⚠️ Session expired. Redirecting to login...");
         setTimeout(() => navigate("/login"), 1500);
