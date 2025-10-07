@@ -108,8 +108,7 @@ const MemberWallet = () => {
         );
 
         // ✅ Handle 401 Unauthorized
-        if (response.status === 401) {
-          console.warn("Unauthorized: Token expired or invalid");
+        if (response.status === 401 || response.status === 403) {
           localStorage.removeItem("auth");
           setMessage("⚠️ Session expired. Redirecting to login...");
           setTimeout(() => navigate("/login"), 1500);
@@ -133,11 +132,10 @@ const MemberWallet = () => {
             _id: item._id,
           }));
 
-        console.log(walletAccounts);
         setAccounts(walletAccounts);
       } catch (error) {
         // ✅ Handle 401 in error response too (e.g. network or CORS case)
-        if (error.response && error.response.status === 401) {
+        if (error.response && error.response.status === 401 || error.response.status === 403) {
           localStorage.removeItem("auth");
           setMessage("⚠️ Session expired. Redirecting to login...");
           setTimeout(() => navigate("/login"), 1500);
@@ -260,7 +258,6 @@ const MemberWallet = () => {
 
   const handleEdit = async (account, status) => {
     try {
-      console.log(account, status);
 
       const response = await axios.patch(
         `${process.env.REACT_APP_BASE_URL}/with-drawal/approve-wallet/${account.uid}`,
@@ -273,7 +270,7 @@ const MemberWallet = () => {
       );
 
       // ✅ Handle 401 Unauthorized
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
         localStorage.removeItem("auth");
         alert("⚠️ Session expired. Redirecting to login...");
         setTimeout(() => navigate("/login"), 1500);
@@ -286,7 +283,7 @@ const MemberWallet = () => {
       alert(`✅ Wallet status updated to "${status}" for ${account.username}`);
     } catch (error) {
       // ✅ Handle 401 in error response too
-      if (error.response && error.response.status === 401) {
+      if (error.response && error.response.status === 401 || error.response.status === 403) {
         localStorage.removeItem("auth");
         alert("⚠️ Session expired. Redirecting to login...");
         setTimeout(() => navigate("/login"), 1500);

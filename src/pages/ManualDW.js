@@ -44,8 +44,7 @@ const ManualDW = () => {
           'Content-Type': 'application/json'
         }
       });
-      if (response.status === 401) {
-        console.warn("Unauthorized: Token may be expired or invalid.");
+      if (response.status === 401 || response.status === 403 ) {
         localStorage.removeItem("isLoggedIn");
         localStorage.removeItem("auth");
         localStorage.removeItem("username")
@@ -190,7 +189,7 @@ const ManualDW = () => {
         }
       );
 
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
         localStorage.removeItem("auth");
         showMessage("⚠️ Session expired. Redirecting to login...", "warning");
         setTimeout(() => navigate("/login"), 1500);
@@ -246,7 +245,7 @@ const ManualDW = () => {
         "success"
       );
     } catch (error) {
-      if (error.response && error.response.status === 401) {
+      if (error.response && error.response.status === 401 || error.response.status === 403 ) {
         localStorage.removeItem("auth");
         showMessage("⚠️ Session expired. Redirecting to login...", "warning");
         setTimeout(() => navigate("/login"), 1500);

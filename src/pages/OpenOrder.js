@@ -370,7 +370,7 @@ export default function OpenOrder() {
       );
 
       // ✅ Handle 401 Unauthorized
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
         localStorage.removeItem("auth");
         alert("⚠️ Session expired. Redirecting to login...");
         setTimeout(() => navigate("/login"), 1500);
@@ -399,7 +399,7 @@ export default function OpenOrder() {
       }
     } catch (error) {
       // ✅ Handle 401 from error response too
-      if (error.response && error.response.status === 401) {
+      if (error.response && error.response.status === 401 || error.response.status === 403) {
         localStorage.removeItem("auth");
         alert("⚠️ Session expired. Redirecting to login...");
         setTimeout(() => navigate("/login"), 1500);
@@ -444,7 +444,6 @@ export default function OpenOrder() {
               Authorization: 'Bearer ' + localStorage.getItem('auth')
             }
           });
-        console.log(response.data.orders)
         setTrades(response.data.orders)
       } catch (error) {
         console.error("Error fetching orders:", error);

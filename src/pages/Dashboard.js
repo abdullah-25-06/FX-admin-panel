@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -76,18 +76,16 @@ const Dashboard = () => {
           });
         setOrders(response.data)
       } catch (error) {
-        console.error("Error fetching orders:", error);
         setOrders([])
         if (error.response) {
-          if (error.response.status === 401) {
-            console.warn("Unauthorized: Token may be expired or invalid.");
+          if (error.response.status === 401 || error.response.status === 403) {
             localStorage.removeItem("isLoggedIn");
             localStorage.removeItem("auth");
             localStorage.removeItem("username")
 
             navigate("/login");
           } else {
-            console.error("Error fetching orders:", error.response.data?.message || error.message);
+            alert("Error fetching orders:")
           }
         } else {
           console.error("Network or server error:", error.message);

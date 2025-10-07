@@ -22,7 +22,6 @@ const Login = () => {
         email: email,
         password: password
       })
-      console.log(data.data)
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("auth", data.data.accessToken);
       localStorage.setItem("username", data.data.username)
