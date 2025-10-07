@@ -78,6 +78,7 @@ const ProductList = () => {
     };
 
     fetchWalletData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const filteredProducts = products

@@ -134,6 +134,7 @@ const AgentManagement = () => {
     }
 
     setIsLoading(false);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save to localStorage whenever agents change
