@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {
   Bell,
-  Edit2,
-  Trash2,
   Search,
-  Plus,
-  Filter,
   ArrowUpDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,23 +13,13 @@ const ProductList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("no");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [filterCategory, setFilterCategory] = useState("All");
+  const [filterStatus] = useState("All");
+  const [filterCategory] = useState("All");
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProduct] = useState(null);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
-
-  // Form states
-  const [newProduct, setNewProduct] = useState({
-    productName: "",
-    category: "Foreign Exchange",
-    randomValues: "",
-    riskControlLow: "",
-    riskControlHigh: "",
-  });
 
   const [editForm, setEditForm] = useState({
     productName: "",
@@ -187,21 +173,21 @@ const ProductList = () => {
     }
   };
 
-  const handleSelectProduct = (productNo) => {
-    setSelectedProducts((prev) =>
-      prev.includes(productNo)
-        ? prev.filter((no) => no !== productNo)
-        : [...prev, productNo]
-    );
-  };
+  // const handleSelectProduct = (productNo) => {
+  //   setSelectedProducts((prev) =>
+  //     prev.includes(productNo)
+  //       ? prev.filter((no) => no !== productNo)
+  //       : [...prev, productNo]
+  //   );
+  // };
 
-  const handleSelectAll = () => {
-    if (selectedProducts.length === filteredProducts.length) {
-      setSelectedProducts([]);
-    } else {
-      setSelectedProducts(filteredProducts.map((product) => product.no));
-    }
-  };
+  // const handleSelectAll = () => {
+  //   if (selectedProducts.length === filteredProducts.length) {
+  //     setSelectedProducts([]);
+  //   } else {
+  //     setSelectedProducts(filteredProducts.map((product) => product.no));
+  //   }
+  // };
 
   // Helper functions
   const showMessage = (text, type = "info") => {

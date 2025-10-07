@@ -1,53 +1,53 @@
 import axios from "axios";
-import { ChevronsUp } from "lucide-react";
-import React, { useState, useEffect } from "react";
+// import { ChevronsUp } from "lucide-react";
+import  { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Initial data
-const initialTrades = [
-  {
-    id: 1676,
-    uid: "1058819",
-    username: "Alex AA",
-    time: "2025-09-23 12:18:30",
-    product: "BTC/USDT",
-    state: "Open",
-    direction: "Buy",
-    duration: "30Second",
-    opening: "11154.521",
-    closing: "11200.000",
-    percentage: "20,30% / 10,20%",
-    profitLoss: "$100.0",
-  },
-  {
-    id: 1675,
-    uid: "1058820",
-    username: "Maria BB",
-    time: "2025-09-23 12:13:15",
-    product: "ETH/USDT",
-    state: "Closed",
-    direction: "Sell",
-    duration: "1Minute",
-    opening: "1850.500",
-    closing: "1840.200",
-    percentage: "15,20% / 8,15%",
-    profitLoss: "-$50.0",
-  },
-  {
-    id: 1674,
-    uid: "1058821",
-    username: "John CC",
-    time: "2025-09-23 12:11:16",
-    product: "ADA/USDT",
-    state: "Open",
-    direction: "Buy",
-    duration: "2Minute",
-    opening: "0.4521",
-    closing: "0.4580",
-    percentage: "25,40% / 12,25%",
-    profitLoss: "$75.5",
-  },
-];
+// const initialTrades = [
+//   {
+//     id: 1676,
+//     uid: "1058819",
+//     username: "Alex AA",
+//     time: "2025-09-23 12:18:30",
+//     product: "BTC/USDT",
+//     state: "Open",
+//     direction: "Buy",
+//     duration: "30Second",
+//     opening: "11154.521",
+//     closing: "11200.000",
+//     percentage: "20,30% / 10,20%",
+//     profitLoss: "$100.0",
+//   },
+//   {
+//     id: 1675,
+//     uid: "1058820",
+//     username: "Maria BB",
+//     time: "2025-09-23 12:13:15",
+//     product: "ETH/USDT",
+//     state: "Closed",
+//     direction: "Sell",
+//     duration: "1Minute",
+//     opening: "1850.500",
+//     closing: "1840.200",
+//     percentage: "15,20% / 8,15%",
+//     profitLoss: "-$50.0",
+//   },
+//   {
+//     id: 1674,
+//     uid: "1058821",
+//     username: "John CC",
+//     time: "2025-09-23 12:11:16",
+//     product: "ADA/USDT",
+//     state: "Open",
+//     direction: "Buy",
+//     duration: "2Minute",
+//     opening: "0.4521",
+//     closing: "0.4580",
+//     percentage: "25,40% / 12,25%",
+//     profitLoss: "$75.5",
+//   },
+// ];
 
 const initialStats = [
   { label: "Profit and loss statistics", value: "$125.50", color: "#e74c3c" },
@@ -63,7 +63,6 @@ const profitMarginEnum = {
   160: 30,
   200: 40,
   240: 50,
-  240: 50
 }
 
 export default function OpenOrder() {
@@ -71,7 +70,7 @@ export default function OpenOrder() {
   const [stats, setStats] = useState(initialStats);
   const [selectedTrades, setSelectedTrades] = useState([]);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [selectedOptions, setSelectedOptions] = useState({});
+  const [selectedOptions] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filterState, setFilterState] = useState("All");
   const [filterDirection, setFilterDirection] = useState("All");
@@ -152,18 +151,18 @@ export default function OpenOrder() {
   const theadStyle = {
     background: "#f0f0f0",
   };
-
-  const plButtonStyle = {
-    background: "#e74c3c",
-    color: "#fff",
-    fontSize: "12px",
-    border: "none",
-    padding: "5px 10px",
-    borderRadius: "4px",
-    cursor: "pointer",
-    transition: "background 0.3s",
-    marginLeft: "5px",
-  };
+  
+  // const plButtonStyle = {
+  //   background: "#e74c3c",
+  //   color: "#fff",
+  //   fontSize: "12px",
+  //   border: "none",
+  //   padding: "5px 10px",
+  //   borderRadius: "4px",
+  //   cursor: "pointer",
+  //   transition: "background 0.3s",
+  //   marginLeft: "5px",
+  // };
 
   const closeButtonStyle = {
     background: "#95a5a6",
@@ -215,24 +214,24 @@ export default function OpenOrder() {
     transition: "background 0.2s",
   };
 
-  const statsGridStyle = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: "10px",
-    marginTop: "20px",
-  };
+  // const statsGridStyle = {
+  //   display: "grid",
+  //   gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+  //   gap: "10px",
+  //   marginTop: "20px",
+  // };
 
-  const statBoxStyle = (color) => ({
-    background: color,
-    color: "#fff",
-    padding: "10px",
-    borderRadius: "6px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-  });
+  // const statBoxStyle = (color) => ({
+  //   background: color,
+  //   color: "#fff",
+  //   padding: "10px",
+  //   borderRadius: "6px",
+  //   display: "flex",
+  //   flexDirection: "column",
+  //   alignItems: "center",
+  //   justifyContent: "center",
+  //   textAlign: "center",
+  // });
 
   const directionStyle = (type) => ({
     display: "inline-block",
@@ -301,8 +300,8 @@ export default function OpenOrder() {
     );
     setSelectedTrades([]);
     updateStatistics();
+    console.log(stats)
   };
-
   // Update statistics based on current trades
   const updateStatistics = () => {
     const totalProfitLoss = trades.reduce((sum, trade) => {
@@ -398,8 +397,7 @@ export default function OpenOrder() {
           break;
       }
     } catch (error) {
-      // ✅ Handle 401 from error response too
-      if (error.response && error.response.status === 401 || error.response.status === 403) {
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
         localStorage.removeItem("auth");
         alert("⚠️ Session expired. Redirecting to login...");
         setTimeout(() => navigate("/login"), 1500);
@@ -429,10 +427,10 @@ export default function OpenOrder() {
     };
   }, []);
 
-  // Update statistics when trades change
-  useEffect(() => {
-    updateStatistics();
-  }, [trades]);
+  // // Update statistics when trades change
+  // useEffect(() => {
+  //   updateStatistics();
+  // }, [trades]);
 
   useEffect(() => {
     const getAllOrders = async () => {
