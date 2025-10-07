@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
   Bell,
-  Edit2,
-  Trash2,
   Search,
-  Plus,
-  Filter,
   ArrowUpDown,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ProductList = () => {
   // State management
@@ -16,21 +13,13 @@ const ProductList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("no");
   const [sortOrder, setSortOrder] = useState("asc");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [filterCategory, setFilterCategory] = useState("All");
+  const [filterStatus] = useState("All");
+  const [filterCategory] = useState("All");
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingProduct] = useState(null);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
-  // Form states
-  const [newProduct, setNewProduct] = useState({
-    productName: "",
-    category: "Foreign Exchange",
-    randomValues: "",
-    riskControlLow: "",
-    riskControlHigh: "",
-  });
 
   const [editForm, setEditForm] = useState({
     productName: "",
@@ -45,35 +34,44 @@ const ProductList = () => {
     const fetchWalletData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${process.env.REACT_APP_BASE_URL}/wallet/wallet-history`, {
-          method: 'GET',
-          headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('auth'),
-            'Content-Type': 'application/json'
+        const response = await fetch(
+          `${process.env.REACT_APP_BASE_URL}/wallet/wallet-history`,
+          {
+            method: "GET",
+            headers: {
+              "Authorization": "Bearer " + localStorage.getItem("auth"),
+              "Content-Type": "application/json",
+            },
           }
-        });
+        );
+
+        // ✅ Handle 401 Unauthorized
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("auth");
+          setMessage("⚠️ Session expired. Redirecting to login...");
+          setTimeout(() => navigate("/login"), 1500);
+          return;
+        }
 
         if (!response.ok) {
-          throw new Error('Failed to fetch wallet data');
+          throw new Error("Failed to fetch wallet data");
         }
 
         const data = await response.json();
-        const rechargeRequests = data.message.rechargeRequests
-          .map((item, index) => ({
-            no: index + 1,
-            serial: item._id,
-            _id: item._id,
-            name: item.userId.user_name,
-            amount: item.amount,
-            payment_url: item.payment_url
-          }));
+        const rechargeRequests = data.message.rechargeRequests.map((item, index) => ({
+          no: index + 1,
+          serial: item._id,
+          _id: item._id,
+          name: item.userId.user_name,
+          amount: item.amount,
+          payment_url: item.payment_url,
+        }));
+
         setProducts(rechargeRequests);
       } catch (error) {
-        console.error('Error fetching wallet data:', error);
-        setMessage('Failed to load wallet data');
-        setTimeout(() => setMessage(''), 3000);
-        // Use initial accounts as fallback
-        // setAccounts(initialAccounts);
+        console.error("Error fetching wallet data:", error);
+        setMessage("❌ Failed to load wallet data");
+        setTimeout(() => setMessage(""), 3000);
       } finally {
         setIsLoading(false);
       }
@@ -175,21 +173,21 @@ const ProductList = () => {
     }
   };
 
-  const handleSelectProduct = (productNo) => {
-    setSelectedProducts((prev) =>
-      prev.includes(productNo)
-        ? prev.filter((no) => no !== productNo)
-        : [...prev, productNo]
-    );
-  };
+  // const handleSelectProduct = (productNo) => {
+  //   setSelectedProducts((prev) =>
+  //     prev.includes(productNo)
+  //       ? prev.filter((no) => no !== productNo)
+  //       : [...prev, productNo]
+  //   );
+  // };
 
-  const handleSelectAll = () => {
-    if (selectedProducts.length === filteredProducts.length) {
-      setSelectedProducts([]);
-    } else {
-      setSelectedProducts(filteredProducts.map((product) => product.no));
-    }
-  };
+  // const handleSelectAll = () => {
+  //   if (selectedProducts.length === filteredProducts.length) {
+  //     setSelectedProducts([]);
+  //   } else {
+  //     setSelectedProducts(filteredProducts.map((product) => product.no));
+  //   }
+  // };
 
   // Helper functions
   const showMessage = (text, type = "info") => {

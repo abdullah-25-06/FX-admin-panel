@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,26 +9,29 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+    try {
+      e.preventDefault();
 
-    if (!email || !password) {
-      setError("Please enter both email and password.");
-      return;
-    }
+      if (!email || !password) {
+        setError("Please enter both email and password.");
+        return;
+      }
 
-    // ✅ Get stored signup data
-    const storedEmail = localStorage.getItem("registeredEmail");
-    const storedPassword = localStorage.getItem("registeredPassword");
-
-    if (email === storedEmail && password === storedPassword) {
+      const data = await axios.post(`${process.env.REACT_APP_BASE_URL}/user/login`, {
+        email: email,
+        password: password
+      })
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userEmail", email);
+      localStorage.setItem("auth", data.data.accessToken);
+      localStorage.setItem("username", data.data.username)
       setError("");
       navigate("/dashboard");
-    } else {
+
+    } catch (error) {      
       setError("Invalid email or password.");
     }
+
   };
 
   const containerStyle = {
@@ -173,7 +177,7 @@ const Login = () => {
             Login
           </button>
 
-          <div style={footerTextStyle}>
+          {/* <div style={footerTextStyle}>
             Don’t have an account?
             <span style={linkStyle} onClick={() => navigate("/signup")}>
               Sign Up
@@ -188,7 +192,7 @@ const Login = () => {
             >
               Reset it here
             </span>
-          </div>
+          </div> */}
         </form>
       </div>
     </div>
