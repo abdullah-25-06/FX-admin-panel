@@ -9,6 +9,7 @@ import {
   Download,
 } from "lucide-react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ManualDW = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +21,7 @@ const ManualDW = () => {
     accountId: null,
     accountBalance: null,
   });
+  const navigate = useNavigate();
 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
@@ -42,6 +44,16 @@ const ManualDW = () => {
           'Content-Type': 'application/json'
         }
       });
+      if (response.status === 401) {
+        console.warn("Unauthorized: Token may be expired or invalid.");
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("auth");
+        localStorage.removeItem("username")
+
+        navigate("/login");
+      } else {
+        console.error("Network or server error:");
+      }
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
@@ -141,18 +153,14 @@ const ManualDW = () => {
     }
 
     const amount = parseFloat(formData.amount);
-    const selectedAccount = accounts.find(
-      (acc) => acc.id === formData.accountId
-    );
+    const selectedAccount = accounts.find((acc) => acc.id === formData.accountId);
+
     if (!selectedAccount || selectedAccount.balance === undefined) {
       showMessage("❌ Selected account not found or invalid balance", "error");
       return;
     }
 
-    if (
-      formData.transactionType === "withdraw" &&
-      amount > selectedAccount.balance
-    ) {
+    if (formData.transactionType === "withdraw" && amount > selectedAccount.balance) {
       showMessage("❌ Insufficient balance for withdrawal", "error");
       return;
     }
@@ -163,27 +171,37 @@ const ManualDW = () => {
     }
 
     setIsLoading(true);
-    console.log("account" + selectedAccount)
+
     try {
-      // /wallet/add-to-wallet
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-      await axios.post(`${process.env.REACT_APP_BASE_URL}/wallet/add-to-wallet`, {
-        amountToAdd: amount,
-        userId: formData.accountId,
-        remarks: {
-          comment: formData.remark,
-          amount
-        }
-      }, {
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('auth')
+      const response = await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/wallet/add-to-wallet`,
+        {
+          amountToAdd: amount,
+          userId: formData.accountId,
+          remarks: {
+            comment: formData.remark,
+            amount,
+          },
         },
-      })
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("auth"),
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        localStorage.removeItem("auth");
+        showMessage("⚠️ Session expired. Redirecting to login...", "warning");
+        setTimeout(() => navigate("/login"), 1500);
+        return;
+      }
+
       const transaction = {
         id: Date.now(),
         accountId: formData.accountId,
         username: formData.account,
-        amount: amount,
+        amount,
         type: formData.transactionType,
         display: formData.display,
         remark: formData.remark,
@@ -222,13 +240,20 @@ const ManualDW = () => {
       });
 
       showMessage(
-        `✅ ${formData.transactionType === "deposit" ? "Deposit" : "Withdrawal"
-        } of $${amount.toFixed(2)} completed successfully for ${formData.account
-        }`,
+        `✅ ${formData.transactionType === "deposit" ? "Deposit" : "Withdrawal"} of $${amount.toFixed(
+          2
+        )} completed successfully for ${formData.account}`,
         "success"
       );
     } catch (error) {
-      showMessage("❌ Transaction failed. Please try again.", "error");
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("auth");
+        showMessage("⚠️ Session expired. Redirecting to login...", "warning");
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        console.error("Transaction error:", error);
+        showMessage("❌ Transaction failed. Please try again.", "error");
+      }
     } finally {
       setIsLoading(false);
     }

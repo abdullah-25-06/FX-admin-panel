@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
+import {  useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -13,9 +14,10 @@ const Dashboard = () => {
     withdrawToday: 0,
     handlingFee: 0,
   });
+  const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
-
+  const [again, setAgain] = useState(true)
   const [filteredOrders, setFilteredOrders] = useState(orders);
   const [filters, setFilters] = useState({
     status: "all",
@@ -76,11 +78,24 @@ const Dashboard = () => {
       } catch (error) {
         console.error("Error fetching orders:", error);
         setOrders([])
+        if (error.response) {
+          if (error.response.status === 401) {
+            console.warn("Unauthorized: Token may be expired or invalid.");
+            localStorage.removeItem("isLoggedIn");
+            localStorage.removeItem("auth");
+            localStorage.removeItem("username")
+
+            navigate("/login");
+          } else {
+            console.error("Error fetching orders:", error.response.data?.message || error.message);
+          }
+        } else {
+          console.error("Network or server error:", error.message);
+        }
       }
     };
-
     getAllOrders();
-  }, []);
+  }, [again]);
 
   const updateRealTimeData = () => {
     setStats((prev) => ({
@@ -94,9 +109,7 @@ const Dashboard = () => {
 
   const handleRefreshData = async () => {
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
+    setAgain(prev => !prev)
     // Update with mock data
     setStats({
       newToday: Math.floor(Math.random() * 10) + 1,
@@ -117,25 +130,29 @@ const Dashboard = () => {
     const csvContent = [
       [
         "ID",
-        "Account",
+        // "Account",
         "Name",
         "Order Time",
         "Product",
         "Status",
         "Direction",
-        "Profit/Loss",
-        "Commission",
+        "Order duration",
+        "Price",
+        "Actual profit and loss",
+        "Earned Status"
       ],
       ...filteredOrders.map((order) => [
-        order.id,
-        order.account,
-        order.name,
-        order.orderTime,
-        order.product,
+        order._id,
+        // order.account,
+        order.userId?.user_name,
+        order.start_time,
+        order.coin,
         order.status,
         order.direction,
-        order.actualProfitLoss,
-        order.commission,
+        order.order_duration,
+        order.opening_price,
+        order.order_outcome_amount > 0 ? formatCurrency(order.order_outcome_amount) : formatCurrency(order.amount),
+        order.earned_status
       ]),
     ]
       .map((row) => row.join(","))
@@ -607,7 +624,7 @@ const Dashboard = () => {
             >
               {formatCurrency(
                 filteredOrders.reduce(
-                    (sum, order) => order.earned_status === 'TOTAL_PROFIT' ? sum + order.order_outcome_amount : sum + 0,
+                  (sum, order) => order.earned_status === 'TOTAL_PROFIT' ? sum + order.order_outcome_amount : sum + 0,
                   0
                 )
               )}

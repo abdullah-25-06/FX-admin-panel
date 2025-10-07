@@ -1,6 +1,7 @@
 import axios from "axios";
 import { ChevronsUp } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Initial data
 const initialTrades = [
@@ -74,6 +75,8 @@ export default function OpenOrder() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterState, setFilterState] = useState("All");
   const [filterDirection, setFilterDirection] = useState("All");
+  const navigate = useNavigate();
+
 
   // Container styles
   const containerStyle = {
@@ -356,46 +359,54 @@ export default function OpenOrder() {
 
   const handleMenuAction = async (action, trade) => {
     try {
-      await axios.patch(`${process.env.REACT_APP_BASE_URL}/order-set/set-proposed-status/${trade._id}`, {
-        proposedStatus: action
-      },
+      const response = await axios.patch(
+        `${process.env.REACT_APP_BASE_URL}/order-set/set-proposed-status/${trade._id}`,
+        { proposedStatus: action },
         {
           headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('auth')
+            Authorization: "Bearer " + localStorage.getItem("auth"),
           },
+        }
+      );
 
-        })
-      setTrades(() => {
-        return filteredTrades.map((elem) => {
-          if (elem._id === trade._id) {
-            return { ...elem, proposed_status: action }
-          }
-          return elem
-        })
-      })
+      // ✅ Handle 401 Unauthorized
+      if (response.status === 401) {
+        localStorage.removeItem("auth");
+        alert("⚠️ Session expired. Redirecting to login...");
+        setTimeout(() => navigate("/login"), 1500);
+        return;
+      }
+
+      // ✅ Update state
+      setTrades(() =>
+        filteredTrades.map((elem) =>
+          elem._id === trade._id
+            ? { ...elem, proposed_status: action }
+            : elem
+        )
+      );
+
+      // ✅ Alert based on action
       switch (action) {
         case "TOTAL_PROFIT":
-          alert(
-            `Total Profit for trade: $${Math.max(0, trade.amount).toFixed(2)}`
-          );
+          alert(`Total Profit for trade: $${Math.max(0, trade.amount).toFixed(2)}`);
           break;
         case "TOTAL_LOSS":
-          alert(
-            `Total Loss for trade: $${Math.max(0, trade.amount).toFixed(2)}`
-          );
+          alert(`Total Loss for trade: $${Math.max(0, trade.amount).toFixed(2)}`);
           break;
-        // case "Default":
-        //   alert(
-        //     `Trade Details:\nID: ${trade.id}\nProduct: ${trade.product}\nDirection: ${trade.direction}\nP/L: ${trade.profitLoss}`
-        //   );
-        //   break;
         default:
           break;
       }
-
-
     } catch (error) {
-      console.log(error)
+      // ✅ Handle 401 from error response too
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("auth");
+        alert("⚠️ Session expired. Redirecting to login...");
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        console.error("Error updating trade status:", error);
+        alert("❌ Failed to update trade status. Please try again.");
+      }
     }
   };
 

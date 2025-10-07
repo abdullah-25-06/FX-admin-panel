@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Wallet } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const MemberWallet = () => {
   // State management
@@ -15,7 +16,8 @@ const MemberWallet = () => {
   const [editingAccount, setEditingAccount] = useState(null);
   const [editForm, setEditForm] = useState({ uid: "", walletAddress: "" });
   const [message, setMessage] = useState("");
-
+  const [again, setAgain] = useState(true)
+  const navigate = useNavigate()
   // Initial data
   const initialAccounts = [
     {
@@ -94,73 +96,65 @@ const MemberWallet = () => {
     const fetchWalletData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${process.env.REACT_APP_BASE_URL}/with-drawal/get-wallet`, {
-          method: 'GET',
-          headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('auth'),
-            'Content-Type': 'application/json'
+        const response = await fetch(
+          `${process.env.REACT_APP_BASE_URL}/with-drawal/get-all-token`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("auth"),
+              "Content-Type": "application/json",
+            },
           }
-        });
+        );
+
+        // ✅ Handle 401 Unauthorized
+        if (response.status === 401) {
+          console.warn("Unauthorized: Token expired or invalid");
+          localStorage.removeItem("auth");
+          setMessage("⚠️ Session expired. Redirecting to login...");
+          setTimeout(() => navigate("/login"), 1500);
+          return;
+        }
 
         if (!response.ok) {
-          throw new Error('Failed to fetch wallet data');
+          throw new Error("Failed to fetch wallet data");
         }
 
         const data = await response.json();
-        console.log(data.message.bankDetails)
-        const walletAccounts = data.message.bankDetails
-          .filter(item => item.type === 'WALLET')
+
+        const walletAccounts = data.message.data
+          .filter((item) => item.type === "WALLET")
           .map((item, index) => ({
             serialNumber: index + 1,
             uid: item._id,
             walletAddress: item.wallet_address,
-            createdAt: new Date(item.createdAt).toISOString().split('T')[0],
-            status: item.is_active === true ? 'Active' : 'InActive',
-            _id: item._id
+            createdAt: new Date(item.createdAt).toISOString().split("T")[0],
+            status: item.is_active === true ? "Active" : "Inactive",
+            _id: item._id,
           }));
-        console.log(walletAccounts)
+
+        console.log(walletAccounts);
         setAccounts(walletAccounts);
       } catch (error) {
-        console.error('Error fetching wallet data:', error);
-        setMessage('Failed to load wallet data');
-        setTimeout(() => setMessage(''), 3000);
-        // Use initial accounts as fallback
-        // setAccounts(initialAccounts);
+        // ✅ Handle 401 in error response too (e.g. network or CORS case)
+        if (error.response && error.response.status === 401) {
+          localStorage.removeItem("auth");
+          setMessage("⚠️ Session expired. Redirecting to login...");
+          setTimeout(() => navigate("/login"), 1500);
+        } else {
+          console.error("Error fetching wallet data:", error);
+          setMessage("❌ Failed to load wallet data");
+          setTimeout(() => setMessage(""), 3000);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchWalletData();
-  }, []);
+  }, [again]);
 
-  // Load data from localStorage on component mount
-  // useEffect(() => {
-  //   setIsLoading(true);
-  //   const savedAccounts = localStorage.getItem("memberWalletAccounts");
 
-  //   if (savedAccounts) {
-  //     try {
-  //       setAccounts(JSON.parse(savedAccounts));
-  //     } catch (error) {
-  //       console.error("Error loading saved accounts:", error);
-  //       setAccounts(initialAccounts);
-  //     }
-  //   } else {
-  //     setAccounts(initialAccounts);
-  //   }
-
-  //   setIsLoading(false);
-  // }, []);
-
-  // // Save to localStorage whenever accounts change
-  // useEffect(() => {
-  //   if (!isLoading) {
-  //     localStorage.setItem("memberWalletAccounts", JSON.stringify(accounts));
-  //   }
-  // }, [accounts, isLoading]);
-
-  // Filter and search functionality
   const filteredAccounts = accounts
     .filter(
       (account) =>
@@ -174,7 +168,7 @@ const MemberWallet = () => {
       let bValue = b[sortField];
 
       // Convert to numbers if sorting by serialNumber or UID
-      if (sortField === "serialNumber" || sortField === "uid") {
+      if (sortField === "serialNumber") {
         aValue = Number(aValue);
         bValue = Number(bValue);
       } else {
@@ -229,97 +223,120 @@ const MemberWallet = () => {
     }
   };
 
-  const handleAddAccount = () => {
-    // Validation
-    if (!newAccount.uid.trim() || !newAccount.walletAddress.trim()) {
-      setMessage("UID and Wallet Address are required");
-      setTimeout(() => setMessage(""), 3000);
-      return;
-    }
+  // const handleAddAccount = () => {
+  //   // Validation
+  //   if (!newAccount.uid.trim() || !newAccount.walletAddress.trim()) {
+  //     setMessage("UID and Wallet Address are required");
+  //     setTimeout(() => setMessage(""), 3000);
+  //     return;
+  //   }
 
-    // Check for duplicate UID
-    const duplicateUid = accounts.find(
-      (acc) => acc.uid.toString() === newAccount.uid
-    );
-    if (duplicateUid) {
-      setMessage(`UID ${newAccount.uid} already exists`);
-      setTimeout(() => setMessage(""), 3000);
-      return;
-    }
+  //   // Check for duplicate UID
+  //   const duplicateUid = accounts.find(
+  //     (acc) => acc.uid.toString() === newAccount.uid
+  //   );
+  //   if (duplicateUid) {
+  //     setMessage(`UID ${newAccount.uid} already exists`);
+  //     setTimeout(() => setMessage(""), 3000);
+  //     return;
+  //   }
 
-    const newSerialNumber =
-      Math.max(...accounts.map((acc) => acc.serialNumber), 0) + 1;
-    const accountToAdd = {
-      serialNumber: newSerialNumber,
-      uid: parseInt(newAccount.uid) || newAccount.uid,
-      walletAddress: newAccount.walletAddress,
-      createdAt: new Date().toISOString().split("T")[0],
-      status: "Active",
-    };
+  //   const newSerialNumber =
+  //     Math.max(...accounts.map((acc) => acc.serialNumber), 0) + 1;
+  //   const accountToAdd = {
+  //     serialNumber: newSerialNumber,
+  //     uid: parseInt(newAccount.uid) || newAccount.uid,
+  //     walletAddress: newAccount.walletAddress,
+  //     createdAt: new Date().toISOString().split("T")[0],
+  //     status: "Active",
+  //   };
 
-    setAccounts([accountToAdd, ...accounts]);
-    setNewAccount({ uid: "", walletAddress: "" });
-    setShowAddForm(false);
-    setMessage(`Account #${newSerialNumber} added successfully`);
-    setTimeout(() => setMessage(""), 3000);
-  };
+  //   setAccounts([accountToAdd, ...accounts]);
+  //   setNewAccount({ uid: "", walletAddress: "" });
+  //   setShowAddForm(false);
+  //   setMessage(`Account #${newSerialNumber} added successfully`);
+  //   setTimeout(() => setMessage(""), 3000);
+  // };
 
   const handleEdit = async (account, status) => {
     try {
-      console.log(account, status)
-      await axios.patch(`${process.env.REACT_APP_BASE_URL}/with-drawal/approve-wallet/${account.uid}`, {
-        walletStatus: status
-      }, {
-        headers: {
-          'Authorization': 'Bearer ' + localStorage.getItem('auth'),
-        }
-      })
+      console.log(account, status);
 
+      const response = await axios.patch(
+        `${process.env.REACT_APP_BASE_URL}/with-drawal/approve-wallet/${account.uid}`,
+        { walletStatus: status },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("auth"),
+          },
+        }
+      );
+
+      // ✅ Handle 401 Unauthorized
+      if (response.status === 401) {
+        localStorage.removeItem("auth");
+        alert("⚠️ Session expired. Redirecting to login...");
+        setTimeout(() => navigate("/login"), 1500);
+        return;
+      }
+
+      // ✅ Success actions
+      setAccounts([]);
+      setAgain((prev) => !prev);
+      alert(`✅ Wallet status updated to "${status}" for ${account.username}`);
     } catch (error) {
-      console.log(error)
+      // ✅ Handle 401 in error response too
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem("auth");
+        alert("⚠️ Session expired. Redirecting to login...");
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        console.error("Error updating wallet status:", error);
+        alert("❌ Failed to update wallet status. Please try again.");
+      }
     }
   };
 
-  const handleSaveEdit = (serialNumber) => {
-    if (!editForm.uid.trim() || !editForm.walletAddress.trim()) {
-      setMessage("UID and Wallet Address are required");
-      setTimeout(() => setMessage(""), 3000);
-      return;
-    }
+  // const handleSaveEdit = (serialNumber) => {
+  //   if (!editForm.uid.trim() || !editForm.walletAddress.trim()) {
+  //     setMessage("UID and Wallet Address are required");
+  //     setTimeout(() => setMessage(""), 3000);
+  //     return;
+  //   }
 
-    // Check for duplicate UID (excluding current account)
-    const duplicateUid = accounts.find(
-      (acc) =>
-        acc.uid.toString() === editForm.uid && acc.serialNumber !== serialNumber
-    );
-    if (duplicateUid) {
-      setMessage(`UID ${editForm.uid} already exists`);
-      setTimeout(() => setMessage(""), 3000);
-      return;
-    }
+  //   // Check for duplicate UID (excluding current account)
+  //   const duplicateUid = accounts.find(
+  //     (acc) =>
+  //       acc.uid.toString() === editForm.uid && acc.serialNumber !== serialNumber
+  //   );
+  //   if (duplicateUid) {
+  //     setMessage(`UID ${editForm.uid} already exists`);
+  //     setTimeout(() => setMessage(""), 3000);
+  //     return;
+  //   }
 
-    const updatedAccounts = accounts.map((account) =>
-      account.serialNumber === serialNumber
-        ? {
-          ...account,
-          uid: parseInt(editForm.uid) || editForm.uid,
-          walletAddress: editForm.walletAddress,
-        }
-        : account
-    );
+  //   const updatedAccounts = accounts.map((account) =>
+  //     account.serialNumber === serialNumber
+  //       ? {
+  //         ...account,
+  //         uid: parseInt(editForm.uid) || editForm.uid,
+  //         walletAddress: editForm.walletAddress,
+  //       }
+  //       : account
+  //   );
 
-    setAccounts(updatedAccounts);
-    setEditingAccount(null);
-    setEditForm({ uid: "", walletAddress: "" });
-    setMessage(`Account #${serialNumber} updated successfully`);
-    setTimeout(() => setMessage(""), 3000);
-  };
+  //   setAccounts(updatedAccounts);
+  //   setEditingAccount(null);
+  //   setEditForm({ uid: "", walletAddress: "" });
+  //   setMessage(`Account #${serialNumber} updated successfully`);
+  //   setTimeout(() => setMessage(""), 3000);
+  // };
 
-  const handleCancelEdit = () => {
-    setEditingAccount(null);
-    setEditForm({ uid: "", walletAddress: "" });
-    setMessage("");
-  };
+  // const handleCancelEdit = () => {
+  //   setEditingAccount(null);
+  //   setEditForm({ uid: "", walletAddress: "" });
+  //   setMessage("");
+  // };
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -355,7 +372,7 @@ const MemberWallet = () => {
       (acc) => acc.status === "Active"
     ).length;
     const inactiveAccounts = accounts.filter(
-      (acc) => acc.status === "Inactive"
+      (acc) => acc.status === "InActive"
     ).length;
 
     return {
@@ -698,7 +715,7 @@ const MemberWallet = () => {
       )}
 
       <div style={styles.tableContainer}>
-        {/* Action Buttons */}
+        {/* Action Buttons
         <div style={styles.buttonContainer}>
           {!showAddForm ? (
             <button
@@ -760,7 +777,7 @@ const MemberWallet = () => {
           >
             Delete Selected ({selectedAccounts.length})
           </button>
-        </div>
+        </div> */}
 
         <table style={styles.table}>
           <thead>
