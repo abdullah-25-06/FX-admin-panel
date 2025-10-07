@@ -33,19 +33,31 @@ const Signup = () => {
       return;
     }
 
+    // ✅ Check if user already exists
+    const existingEmail = localStorage.getItem("registeredEmail");
+    if (existingEmail === email) {
+      setError("An account with this email already exists.");
+      return;
+    }
+
+    // ✅ Store user data in localStorage
+    localStorage.setItem("registeredName", fullName);
+    localStorage.setItem("registeredEmail", email);
+    localStorage.setItem("registeredPassword", password);
+
     setError("");
-    console.log("Signup successful:", formData);
+    alert("Signup successful! You can now log in.");
 
     navigate("/login");
   };
 
-  // ✅ Background image inline style
+  // ✅ Background and form styles
   const containerStyle = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     height: "100vh",
-    backgroundImage: 'url("/bg-image.jpg")', // ✅ Correct path for public folder
+    backgroundImage: 'url("/bg-image.jpg")',
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
@@ -53,7 +65,7 @@ const Signup = () => {
   };
 
   const boxStyle = {
-    backgroundColor: "rgba(14, 23, 47, 0.85)", // semi-transparent overlay
+    backgroundColor: "rgba(14, 23, 47, 0.85)",
     padding: "30px",
     borderRadius: "10px",
     width: "320px",

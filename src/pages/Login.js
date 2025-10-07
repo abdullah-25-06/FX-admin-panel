@@ -10,29 +10,38 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!email || !password) {
       setError("Please enter both email and password.");
       return;
     }
-    setError("");
-    console.log("Logging in with:", { email, password });
-    // Place your login API call or authentication logic here
+
+    // ✅ Get stored signup data
+    const storedEmail = localStorage.getItem("registeredEmail");
+    const storedPassword = localStorage.getItem("registeredPassword");
+
+    if (email === storedEmail && password === storedPassword) {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userEmail", email);
+      setError("");
+      navigate("/dashboard");
+    } else {
+      setError("Invalid email or password.");
+    }
   };
 
-  // 🧠 Page background with image
   const containerStyle = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     height: "100vh",
-    backgroundImage: "url('/bg-image.jpg')", // 👈 image from public folder
+    backgroundImage: "url('/bg-image.jpg')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
     fontFamily: "Arial, sans-serif",
   };
 
-  // 🧠 Optional overlay if you want slight dark background behind form
   const overlayStyle = {
     position: "absolute",
     top: 0,
@@ -118,7 +127,7 @@ const Login = () => {
 
   return (
     <div style={containerStyle}>
-      <div style={overlayStyle}></div> {/* optional overlay */}
+      <div style={overlayStyle}></div>
       <div style={formWrapperStyle}>
         <form onSubmit={handleSubmit} style={boxStyle}>
           <div style={titleStyle}>Login</div>

@@ -46,7 +46,13 @@ import ForgotPassword from "./pages/ForgotPassword";
 
 import "./App.css";
 
-// Sidebar wrapper
+/* ✅ Helper ProtectedRoute component */
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = localStorage.getItem("isLoggedIn") === "true";
+  return isAuthenticated ? children : <Navigate to='/login' replace />;
+};
+
+/* ✅ Sidebar wrapper for navigation */
 function SidebarWithNavigation() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -66,7 +72,7 @@ function SidebarWithNavigation() {
   );
 }
 
-// Main Layout (for dashboard & other pages)
+/* ✅ Main Layout for dashboard & other protected pages */
 function MainLayout() {
   return (
     <div className='app-container flex'>
@@ -114,13 +120,23 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* ✅ Auth Routes - NO SIDEBAR */}
+        {/* ✅ Default route: Redirect to login first */}
+        <Route path='/' element={<Navigate to='/login' />} />
+
+        {/* ✅ Public Routes - NO SIDEBAR */}
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
         <Route path='/forgot-password' element={<ForgotPassword />} />
 
-        {/* ✅ Main App Routes */}
-        <Route path='/*' element={<MainLayout />} />
+        {/* ✅ Protected Routes - Only if logged in */}
+        <Route
+          path='/*'
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );
