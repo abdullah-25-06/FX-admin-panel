@@ -35,7 +35,7 @@ const ProductList = () => {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_BASE_URL}/wallet/wallet-history`,
+          `${process.env.REACT_APP_BASE_URL}/wallet/recharge-requests`,
           {
             method: "GET",
             headers: {
@@ -56,7 +56,6 @@ const ProductList = () => {
         if (!response.ok) {
           throw new Error("Failed to fetch wallet data");
         }
-
         const data = await response.json();
         const rechargeRequests = data.message.rechargeRequests.map((item, index) => ({
           no: index + 1,
@@ -540,7 +539,7 @@ const ProductList = () => {
             <Search size={16} color='#666' />
             <input
               type='text'
-              placeholder='Search products...'
+              placeholder='Search recharge...'
               style={styles.searchInput}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -680,8 +679,8 @@ const ProductList = () => {
               style={{ textAlign: "center", padding: "40px", color: "#666" }}
             >
               {searchTerm || filterStatus !== "All" || filterCategory !== "All"
-                ? "No products found matching your criteria"
-                : "No products found"}
+                ? "No recharge request found matching your criteria"
+                : "No recharge request found"}
             </div>
           )}
         </div>

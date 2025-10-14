@@ -1,4 +1,4 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Filter,
@@ -6,6 +6,7 @@ import {
   Eye,
   X,
 } from "lucide-react";
+import axios from "axios";
 
 const WithdrawalList = () => {
   // State management
@@ -33,128 +34,72 @@ const WithdrawalList = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Initial data
-  const initialData = [
-    {
-      no: 385,
-      uid: "1058801",
-      username: "Ali 12345",
-      dateTime: "2025-09-21 19:22:14",
-      withdrawAmount: 116478.0,
-      accountBalance: 0.0,
-      holderName: "Saiyad rukman ratt",
-      bankName: "Karnataka bank",
-      accountNumber: "653250010104810I",
-      walletAddress: "",
-      qrCode: "",
-      status: "Pending",
-      paymentMethod: "Bank Transfer",
-      transactionId: "TX3859271",
-      notes: "",
-    },
-    {
-      no: 384,
-      uid: "1058817",
-      username: "Waheed1",
-      dateTime: "2025-09-20 16:54:03",
-      withdrawAmount: 20.0,
-      accountBalance: 50.0,
-      holderName: "",
-      bankName: "",
-      accountNumber: "",
-      walletAddress: "Trcejdvsbkkdjhjdd3uhsgwb",
-      qrCode: "",
-      status: "Passed",
-      paymentMethod: "Crypto",
-      transactionId: "TX3848156",
-      notes: "Auto-approved",
-    },
-    {
-      no: 383,
-      uid: "1058805",
-      username: "SanaKhan",
-      dateTime: "2025-09-19 11:45:20",
-      withdrawAmount: 250.5,
-      accountBalance: 1000.0,
-      holderName: "Sana Khan",
-      bankName: "HBL Bank",
-      accountNumber: "PK12HABB00000012345678",
-      walletAddress: "3Ed8nsbbdheh293jd8s73",
-      qrCode: "https://qr.example.com/sana",
-      status: "Frozen",
-      paymentMethod: "Bank Transfer",
-      transactionId: "TX3837429",
-      notes: "Under review",
-    },
-    {
-      no: 382,
-      uid: "1058809",
-      username: "JohnCrypto",
-      dateTime: "2025-09-18 09:22:14",
-      withdrawAmount: 1500.0,
-      accountBalance: 500.0,
-      holderName: "John Doe",
-      bankName: "Meezan Bank",
-      accountNumber: "PK45MEZN00000087654321",
-      walletAddress: "",
-      qrCode: "",
-      status: "Rejected",
-      paymentMethod: "Bank Transfer",
-      transactionId: "TX3826593",
-      notes: "Insufficient documentation",
-    },
-    {
-      no: 381,
-      uid: "1058810",
-      username: "HiraAli",
-      dateTime: "2025-09-17 14:30:00",
-      withdrawAmount: 750.0,
-      accountBalance: 1200.0,
-      holderName: "Hira Ali",
-      bankName: "UBL",
-      accountNumber: "PK98UBL00000009876543",
-      walletAddress: "bc1qasdsadasd12345",
-      qrCode: "",
-      status: "Passed",
-      paymentMethod: "Crypto",
-      transactionId: "TX3815748",
-      notes: "Quick processing",
-    },
-  ];
+  async function getAllWithDrawlsRequest() {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/with-drawal/get-all-with-drawals`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth")}`
+        }
+      })
+      const data = response.data.message.allRequests.map((item, index) => {
+        return {
+          no: index + 1,
+          uid: item._id,
+          username: item.userId?.user_name,
+          dateTime: item.createdAt,
+          withdrawAmount: item.amount,
+          paymentMethod: item.token_id?.type,
+          bankName: item.token_id?.bank_name,
+          walletAddress: item.token_id?.wallet_address,
+          status: item.status
+        }
+      })
+      setWithdrawals(data)
 
+    } catch (error) {
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        localStorage.removeItem("auth");
+        alert("⚠️ Session expired. Redirecting to login...");
+      } else {
+        console.error("Error updating wallet status:", error);
+        alert("❌ Failed to update wallet status. Please try again.");
+      }
+    }
+  }
   // Load data from localStorage on component mount
   useEffect(() => {
     setIsLoading(true);
-    const savedWithdrawals = localStorage.getItem("withdrawalList");
+    // const savedWithdrawals = localStorage.getItem("withdrawalList");
 
-    if (savedWithdrawals) {
-      try {
-        setWithdrawals(JSON.parse(savedWithdrawals));
-      } catch (error) {
-        console.error("Error loading saved withdrawals:", error);
-        setWithdrawals(initialData);
-      }
-    } else {
-      setWithdrawals(initialData);
-    }
+    // if (savedWithdrawals) {
+    //   try {
+    //     setWithdrawals(JSON.parse(savedWithdrawals));
+    //   } catch (error) {
+    //     console.error("Error loading saved withdrawals:", error);
+    //     setWithdrawals(initialData);
+    //   }
+    // } else {
+    //   setWithdrawals(initialData);
+    // }
 
+    getAllWithDrawlsRequest()
     setIsLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save to localStorage whenever withdrawals change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem("withdrawalList", JSON.stringify(withdrawals));
-    }
-  }, [withdrawals, isLoading]);
+  // useEffect(() => {
+  //   if (!isLoading) {
+  //     localStorage.setItem("withdrawalList", JSON.stringify(withdrawals));
+  //   }
+  // }, [withdrawals, isLoading]);
 
   // Filter and search functionality
   const filteredWithdrawals = withdrawals
     .filter((withdrawal) => {
       const matchesSearch =
-        withdrawal.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        withdrawal.uid.includes(searchTerm) ||
+        withdrawal.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        withdrawal.uid?.includes(searchTerm) ||
         withdrawal.holderName
           ?.toLowerCase()
           .includes(searchTerm.toLowerCase()) ||
@@ -197,32 +142,36 @@ const WithdrawalList = () => {
     });
 
   // Withdrawal operations
-  const handleStatusUpdate = (withdrawalNo, newStatus, notes = "") => {
-    const updatedWithdrawals = withdrawals.map((withdrawal) =>
-      withdrawal.no === withdrawalNo
-        ? {
-            ...withdrawal,
-            status: newStatus,
-            notes: notes || withdrawal.notes,
-            processedAt: new Date().toISOString(),
-          }
-        : withdrawal
-    );
+  const handleStatusUpdate = async (withdrawalNo, newStatus, notes = "") => {
+    try {
+      await axios.post(`${process.env.REACT_APP_BASE_URL}/with-drawal/update-request/${withdrawalNo}`, { status: newStatus }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("auth")}`
+        }
+      })
+      const statusMessages = {
+        SUCCESSFULL: `Withdrawal #${withdrawalNo} approved successfully`,
+        REJECTED: `Withdrawal #${withdrawalNo} rejected`,
+        FREEZE: `Withdrawal #${withdrawalNo} frozen for review`,
+        UNDER_REVIEW: `Withdrawal #${withdrawalNo} set to pending`,
+      };
 
-    setWithdrawals(updatedWithdrawals);
-
-    // const withdrawal = withdrawals.find((w) => w.no === withdrawalNo);
-    const statusMessages = {
-      Passed: `Withdrawal #${withdrawalNo} approved successfully`,
-      Rejected: `Withdrawal #${withdrawalNo} rejected`,
-      Frozen: `Withdrawal #${withdrawalNo} frozen for review`,
-      Pending: `Withdrawal #${withdrawalNo} set to pending`,
-    };
-
-    showMessage(
-      statusMessages[newStatus] ||
+      showMessage(
+        statusMessages[newStatus] ||
         `Status updated for withdrawal #${withdrawalNo}`
-    );
+      );
+
+    } catch (error) {
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        localStorage.removeItem("auth");
+        alert("⚠️ Session expired. Redirecting to login...");
+      } else {
+        console.error("Error updating wallet status:", error.response.data.error);
+        alert("❌ Failed to update status. " + error.response.data.error);
+      }
+    }
+
+    getAllWithDrawlsRequest()
   };
 
   const handleBulkStatusUpdate = (newStatus) => {
@@ -234,10 +183,10 @@ const WithdrawalList = () => {
     const updatedWithdrawals = withdrawals.map((withdrawal) =>
       selectedWithdrawals.includes(withdrawal.no)
         ? {
-            ...withdrawal,
-            status: newStatus,
-            processedAt: new Date().toISOString(),
-          }
+          ...withdrawal,
+          status: newStatus,
+          processedAt: new Date().toISOString(),
+        }
         : withdrawal
     );
 
@@ -302,23 +251,23 @@ const WithdrawalList = () => {
     }
   };
 
-  const handleSelectWithdrawal = (withdrawalNo) => {
-    setSelectedWithdrawals((prev) =>
-      prev.includes(withdrawalNo)
-        ? prev.filter((no) => no !== withdrawalNo)
-        : [...prev, withdrawalNo]
-    );
-  };
+  // const handleSelectWithdrawal = (withdrawalNo) => {
+  //   setSelectedWithdrawals((prev) =>
+  //     prev.includes(withdrawalNo)
+  //       ? prev.filter((no) => no !== withdrawalNo)
+  //       : [...prev, withdrawalNo]
+  //   );
+  // };
 
-  const handleSelectAll = () => {
-    if (selectedWithdrawals.length === filteredWithdrawals.length) {
-      setSelectedWithdrawals([]);
-    } else {
-      setSelectedWithdrawals(
-        filteredWithdrawals.map((withdrawal) => withdrawal.no)
-      );
-    }
-  };
+  // const handleSelectAll = () => {
+  //   if (selectedWithdrawals.length === filteredWithdrawals.length) {
+  //     setSelectedWithdrawals([]);
+  //   } else {
+  //     setSelectedWithdrawals(
+  //       filteredWithdrawals.map((withdrawal) => withdrawal.no)
+  //     );
+  //   }
+  // };
 
   const handleExportData = () => {
     const dataToExport = filteredWithdrawals.map((w) => ({
@@ -327,10 +276,10 @@ const WithdrawalList = () => {
       Username: w.username,
       "Date/Time": w.dateTime,
       Amount: w.withdrawAmount,
-      Balance: w.accountBalance,
       "Payment Method": w.paymentMethod,
       Status: w.status,
-      "Transaction ID": w.transactionId,
+      "Wallet/Account": w.bankName || w.walletAddress || "-",
+      // "Transaction ID": w.transactionId,
     }));
 
     const headers = Object.keys(dataToExport[0]).join(",");
@@ -343,7 +292,7 @@ const WithdrawalList = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `withdrawals-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `withdrawals-${new Date().toISOString()?.split("T")[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -360,20 +309,20 @@ const WithdrawalList = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      Passed: "#27ae60",
-      Rejected: "#e74c3c",
-      Frozen: "#f39c12",
-      Pending: "#3498db",
+      SUCCESSFULL: "#27ae60",
+      REJECTED: "#e74c3c",
+      FREEZE: "#f39c12",
+      UNDER_REVIEW: "#3498db",
     };
     return colors[status] || "#666";
   };
 
   const getStatusIcon = (status) => {
     const icons = {
-      Passed: "✓",
-      Rejected: "✗",
-      Frozen: "❄",
-      Pending: "⏳",
+      SUCCESSFULL: "✓",
+      REJECTED: "✗",
+      FREEZE: "❄",
+      UNDER_REVIEW: "⏳",
     };
     return icons[status] || "";
   };
@@ -386,22 +335,22 @@ const WithdrawalList = () => {
       0
     );
     const pendingWithdrawals = withdrawals.filter(
-      (w) => w.status === "Pending"
+      (w) => w.status === "UNDER_REVIEW"
     ).length;
     const passedWithdrawals = withdrawals.filter(
-      (w) => w.status === "Passed"
+      (w) => w.status === "SUCCESSFULL"
     ).length;
     const frozenWithdrawals = withdrawals.filter(
-      (w) => w.status === "Frozen"
+      (w) => w.status === "FREEZE"
     ).length;
 
     return {
       totalWithdrawals,
-      totalAmount: totalAmount.toFixed(2),
+      totalAmount: totalAmount?.toFixed(2),
       pendingWithdrawals,
       passedWithdrawals,
       frozenWithdrawals,
-      selected: selectedWithdrawals.length,
+      selected: selectedWithdrawals?.length,
     };
   };
 
@@ -754,13 +703,13 @@ const WithdrawalList = () => {
           </div>
           {!isMobile && (
             <>
-              <button
+              {/* <button
                 style={{ ...styles.button, ...styles.buttonSecondary }}
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <Filter size={16} />
                 Filters
-              </button>
+              </button> */}
               <button
                 style={{ ...styles.button, ...styles.buttonPrimary }}
                 onClick={handleExportData}
@@ -909,17 +858,17 @@ const WithdrawalList = () => {
           <table style={styles.table}>
             <thead>
               <tr style={styles.tableHeader}>
-                <th style={styles.tableHeaderCell}>
+                {/* <th style={styles.tableHeaderCell}>
                   <input
                     type='checkbox'
                     checked={
                       selectedWithdrawals.length ===
-                        filteredWithdrawals.length &&
+                      filteredWithdrawals.length &&
                       filteredWithdrawals.length > 0
                     }
                     onChange={handleSelectAll}
                   />
-                </th>
+                </th> */}
                 <th
                   style={styles.tableHeaderCell}
                   onClick={() => handleSort("no")}
@@ -971,20 +920,20 @@ const WithdrawalList = () => {
             <tbody>
               {filteredWithdrawals.map((item) => (
                 <tr key={item.no} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                  <td style={styles.tableCell}>
+                  {/* <td style={styles.tableCell}>
                     <input
                       type='checkbox'
                       checked={selectedWithdrawals.includes(item.no)}
                       onChange={() => handleSelectWithdrawal(item.no)}
                     />
-                  </td>
+                  </td> */}
                   <td style={styles.tableCell}>{item.no}</td>
                   <td style={styles.tableCell}>{item.uid}</td>
                   <td style={styles.tableCell}>{item.username}</td>
                   <td style={styles.tableCell}>
-                    <div>{item.dateTime.split(" ")[0]}</div>
+                    <div>{item.dateTime?.split(" ")[0]}</div>
                     <div style={{ color: "#999", fontSize: "11px" }}>
-                      {item.dateTime.split(" ")[1]}
+                      {item.dateTime?.split(" ")[1]}
                     </div>
                   </td>
                   <td
@@ -994,7 +943,7 @@ const WithdrawalList = () => {
                       fontWeight: 500,
                     }}
                   >
-                    ${item.withdrawAmount.toFixed(2)}
+                    ${item.withdrawAmount?.toFixed(2)}
                   </td>
                   <td style={styles.tableCell}>{item.paymentMethod}</td>
                   <td style={styles.tableCell}>
@@ -1028,9 +977,9 @@ const WithdrawalList = () => {
                           padding: "6px 8px",
                           fontSize: "12px",
                         }}
-                        onClick={() => handleStatusUpdate(item.no, "Passed")}
-                        disabled={item.status === "Passed"}
-                        title='Approve'
+                        onClick={() => handleStatusUpdate(item.uid, "SUCCESSFULL")}
+                        disabled={item.status === "SUCCESSFULL"}
+                        title='SUCCESSFULL'
                       >
                         ✓
                       </button>
@@ -1041,9 +990,9 @@ const WithdrawalList = () => {
                           padding: "6px 8px",
                           fontSize: "12px",
                         }}
-                        onClick={() => handleStatusUpdate(item.no, "Rejected")}
-                        disabled={item.status === "Rejected"}
-                        title='Reject'
+                        onClick={() => handleStatusUpdate(item.uid, "REJECTED")}
+                        disabled={item.status === "REJECTED"}
+                        title='REJECTED'
                       >
                         ✗
                       </button>
@@ -1054,9 +1003,9 @@ const WithdrawalList = () => {
                           padding: "6px 8px",
                           fontSize: "12px",
                         }}
-                        onClick={() => handleStatusUpdate(item.no, "Frozen")}
-                        disabled={item.status === "Frozen"}
-                        title='Freeze'
+                        onClick={() => handleStatusUpdate(item.uid, "FREEZE")}
+                        disabled={item.status === "FREEZE"}
+                        title='FREEZE'
                       >
                         ❄
                       </button>
@@ -1121,7 +1070,7 @@ const WithdrawalList = () => {
                   fontWeight: "500",
                 }}
               >
-                ${item.withdrawAmount.toFixed(2)}
+                ${item.withdrawAmount?.toFixed(2)}
               </div>
             </div>
 
@@ -1160,22 +1109,22 @@ const WithdrawalList = () => {
             <div style={styles.cardActions}>
               <button
                 style={{ ...styles.button, ...styles.buttonSuccess, flex: 1 }}
-                onClick={() => handleStatusUpdate(item.no, "Passed")}
-                disabled={item.status === "Passed"}
+                onClick={() => handleStatusUpdate(item.uid, "SUCCESSFULL")}
+                disabled={item.status === "SUCCESSFULL"}
               >
                 ✓ Approve
               </button>
               <button
                 style={{ ...styles.button, ...styles.buttonDanger, flex: 1 }}
-                onClick={() => handleStatusUpdate(item.no, "Rejected")}
-                disabled={item.status === "Rejected"}
+                onClick={() => handleStatusUpdate(item.uid, "REJECTED")}
+                disabled={item.status === "REJECTED"}
               >
                 ✗ Reject
               </button>
               <button
                 style={{ ...styles.button, ...styles.buttonWarning, flex: 1 }}
-                onClick={() => handleStatusUpdate(item.no, "Frozen")}
-                disabled={item.status === "Frozen"}
+                onClick={() => handleStatusUpdate(item.uid, "FREEZE")}
+                disabled={item.status === "FREEZE"}
               >
                 ❄ Freeze
               </button>
@@ -1250,13 +1199,13 @@ const WithdrawalList = () => {
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "#666" }}>Amount:</span>
                 <span style={{ color: "#27ae60", fontWeight: "500" }}>
-                  ${viewingWithdrawal.withdrawAmount.toFixed(2)}
+                  ${viewingWithdrawal.withdrawAmount?.toFixed(2)}
                 </span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
+              {/* <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "#666" }}>Balance:</span>
-                <span>${viewingWithdrawal.accountBalance.toFixed(2)}</span>
-              </div>
+                <span>${viewingWithdrawal.accountBalance?.toFixed(2)}</span>
+              </div> */}
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "#666" }}>Payment Method:</span>
                 <span>{viewingWithdrawal.paymentMethod}</span>
@@ -1312,12 +1261,12 @@ const WithdrawalList = () => {
                   {viewingWithdrawal.status}
                 </span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
+              {/* <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "#666" }}>Transaction ID:</span>
                 <span style={{ fontFamily: "monospace", fontSize: "12px" }}>
                   {viewingWithdrawal.transactionId}
                 </span>
-              </div>
+              </div> */}
               {viewingWithdrawal.notes && (
                 <div>
                   <div style={{ color: "#666", marginBottom: "4px" }}>
